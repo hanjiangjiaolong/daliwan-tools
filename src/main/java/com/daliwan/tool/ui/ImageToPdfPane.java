@@ -1,6 +1,5 @@
 package com.daliwan.tool.ui;
 
-import com.daliwan.tool.core.doc.ConversionException;
 import com.daliwan.tool.core.doc.ImageToPdfConverter;
 import com.daliwan.tool.util.FileNames;
 import javafx.collections.FXCollections;

@@ -16,6 +16,14 @@
     <name>daliwan_tool</name>
     <description>大力丸：JavaFX 桌面工具箱——哈希摘要、JSON 处理、编码转换、加解密、二维码与文档转换</description>
 
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -35,9 +43,8 @@
     </properties>
 
     <!--
-        Aspose 的 Java 构件不在 Maven Central，只发布在自家仓库。
-        Aspose.Words 早期是靠手工放进本地仓库的，Cells/Slides 加进来后
-        统一走这个仓库，换机器后 mvn package 才能自动拉全。
+        依赖全部来自 Maven Central，不需要额外声明仓库。
+        （早期用过 Aspose 商业库，需要挂 releases.aspose.com；换成 Stirling 后已移除。）
     -->
     <dependencies>
         <!-- JavaFX 控件库；base / graphics 由传递依赖引入 -->

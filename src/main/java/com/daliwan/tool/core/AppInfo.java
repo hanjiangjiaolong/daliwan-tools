@@ -70,6 +70,15 @@ public final class AppInfo {
         return ToolSettings.DEFAULT_FILE.toString();
     }
 
+    /**
+     * 开源协议；与仓库根目录的 {@code LICENSE} / {@code NOTICE} 保持一致。
+     *
+     * <p>改协议时要三处一起改：LICENSE 文件、NOTICE 归属、pom 的 {@code <licenses>}。
+     */
+    public static String license() {
+        return "Apache-2.0";
+    }
+
     /** 第三方组件清单（不可变）。 */
     public static List<Credit> credits() {
         return CREDITS;

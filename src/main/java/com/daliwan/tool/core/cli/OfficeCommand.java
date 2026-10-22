@@ -4,12 +4,8 @@ import com.daliwan.tool.core.doc.ConversionException;
 import com.daliwan.tool.core.doc.PdfToOfficeConverter;
 import com.daliwan.tool.core.ipc.InstanceBridge;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +22,6 @@ public final class OfficeCommand {
 
     private static final Path LOG_FILE = Path.of(
             System.getProperty("user.home"), ".daliwan", "convert.log");
-    private static final long LOG_LIMIT = 256 * 1024;
 
     private OfficeCommand() {
     }
@@ -128,21 +123,6 @@ public final class OfficeCommand {
 
     /** 追加一行日志；超过上限先裁剪，避免无限制增长。 */
     private static synchronized void log(String line) {
-        try {
-            Path parent = LOG_FILE.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            if (Files.isRegularFile(LOG_FILE) && Files.size(LOG_FILE) > LOG_LIMIT) {
-                Files.delete(LOG_FILE);
-            }
-            String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            Files.writeString(LOG_FILE, stamp + " " + line + System.lineSeparator(),
-                    StandardCharsets.UTF_8,
-                    java.nio.file.StandardOpenOption.CREATE,
-                    java.nio.file.StandardOpenOption.APPEND);
-        } catch (IOException ignored) {
-            // 日志写不了不影响转换
-        }
+        CommandLog.append(LOG_FILE, line);
     }
 }

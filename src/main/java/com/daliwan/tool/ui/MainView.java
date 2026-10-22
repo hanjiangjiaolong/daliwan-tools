@@ -26,7 +26,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,7 +79,8 @@ public class MainView extends BorderPane {
             new NavEntry("office2pdf", "文档", "Office 转 PDF", "Word · Excel · PPT", DocConvertPane::new),
             new NavEntry("pdf2office", "文档", "PDF 转 Office", "Word · Excel · PPT · 文本", PdfToOfficePane::new),
             new NavEntry("pdf-tools", "文档", "PDF 拆分合并", "按页提取 · 多文件合并", PdfToolsPane::new),
-            new NavEntry("img2pdf", "文档", "图片转 PDF", "多图合成一份 PDF", ImageToPdfPane::new)
+            new NavEntry("img2pdf", "文档", "图片转 PDF", "多图合成一份 PDF", ImageToPdfPane::new),
+            new NavEntry("winupdate", "系统", "Windows 更新", "阻止 · 恢复自动更新", UpdateGuardPane::new)
     );
 
     /** 设置页里「Office 转 PDF 右键菜单」开关的标识。 */

@@ -113,6 +113,7 @@ public final class AboutDialog {
 
         card.getChildren().add(kv("Java", AppInfo.javaRuntime()));
         card.getChildren().add(kv("系统", AppInfo.osDescription()));
+        card.getChildren().add(kv("开源协议", AppInfo.license()));
         // 路径长且可能含中文，走 TextFlow 换行：Label.setWrapText 在 VBox 里首帧只给单行高
         card.getChildren().add(kv("配置文件", null, AppInfo.configPath()));
         return card;
