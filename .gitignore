@@ -4,7 +4,13 @@ dist/
 release/
 *.class
 *.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
 *.log
+hs_err_pid*
 
 # IDE
 .idea/
