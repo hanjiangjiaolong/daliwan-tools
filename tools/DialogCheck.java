@@ -36,13 +36,13 @@ public class DialogCheck {
         switch (mode) {
             case "fail", "dark-fail" -> outcomes.add(new PdfCommand.Outcome(
                     Path.of("C:\\工作\\季度汇报.pptx"), null,
-                    "Aspose.Slides 转换失败：The document format is not supported"));
+                    "转换失败：不支持的文档格式"));
             case "warn" -> {
                 outcomes.add(new PdfCommand.Outcome(
                         Path.of("C:\\工作\\清单.xlsx"), Path.of("C:\\工作\\清单.pdf"), null));
                 outcomes.add(new PdfCommand.Outcome(
                         Path.of("C:\\工作\\季度汇报.pptx"), null,
-                        "Aspose.Slides 转换失败：The document format is not supported"));
+                        "转换失败：不支持的文档格式"));
             }
             case "many" -> {
                 for (int i = 1; i <= 7; i++) {

@@ -79,11 +79,11 @@ echo [2/4] jlink 生成精简运行时（选定模块 + 中文语言包 + 压缩）...
 
 if exist "target\runtime" rmdir /s /q "target\runtime"
 
-REM 模块集合：jdeps --print-module-deps 结果 + 实测 OcrSmoke/DocSmoke/PdfSmoke/UiCheck 验证过
+REM 模块集合：jdeps --print-module-deps 结果 + 实测 OcrSmoke/PdfSmoke/UiCheck 验证过
 
-REM   java.desktop       Aspose / PDFBox / JavaFX Prism 都要系统 AWT
+REM   java.desktop       Stirling / PDFBox / JavaFX Prism 都要系统 AWT
 
-REM   java.sql(+rowset)  Aspose.Cells 引用了 javax.sql.rowset
+REM   java.sql(+rowset)  Stirling 表格转换 引用了 javax.sql.rowset
 
 REM   jdk.charsets       GBK/GB18030 编码，缺了系统默认编码就回退成 ISO-8859-1
 

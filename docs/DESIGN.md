@@ -242,7 +242,7 @@ CSV 是文本格式，中文 Excel 打开会连踩三个坑：无 BOM 乱码（�
 
 ### 曾经走过的路：GluonFX / native-image
 
-早期是用 GluonFX + GraalVM 打单文件原生 exe 的，现已整条链路移除（`build-exe.bat`、pom 里的 `gluonfx-maven-plugin`、`META-INF/native-image` 元数据与 JNI 补丁脚本都已删掉）。原因：AOT 下每加一个依赖都要补反射 / JNI / 资源配置，踩坑成本远高于收益——`java.awt` 的字段是 JNI 访问的（缺配置就 `NoSuchFieldError: ColorModel.nBits`）、Aspose 的 `WindowsNativeCall_x64.dll` 会 JNI 回调 `HashMap.<init>(I)V` 与 `Byte.<init>(B)V`、PDFBox 的 cmap / afm 资源要逐个写进 `IncludeResources`、JavaFX 静态库还得手工打 JNI 版本补丁。换 jpackage 后这些全部消失，代价只是产物大一点、启动慢几百毫秒，换来**功能与开发环境完全一致**。
+早期是用 GluonFX + GraalVM 打单文件原生 exe 的，现已整条链路移除（`build-exe.bat`、pom 里的 `gluonfx-maven-plugin`、`META-INF/native-image` 元数据与 JNI 补丁脚本都已删掉）。原因：AOT 下每加一个依赖都要补反射 / JNI / 资源配置，踩坑成本远高于收益——`java.awt` 的字段是 JNI 访问的（缺配置就 `NoSuchFieldError: ColorModel.nBits`）、文档转换库的 `WindowsNativeCall_x64.dll` 会 JNI 回调 `HashMap.<init>(I)V` 与 `Byte.<init>(B)V`、PDFBox 的 cmap / afm 资源要逐个写进 `IncludeResources`、JavaFX 静态库还得手工打 JNI 版本补丁。换 jpackage 后这些全部消失，代价只是产物大一点、启动慢几百毫秒，换来**功能与开发环境完全一致**。
 
 **怎么确认打包没漏东西**
 

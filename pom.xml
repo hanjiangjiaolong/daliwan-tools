@@ -44,7 +44,7 @@
 
     <!--
         依赖全部来自 Maven Central，不需要额外声明仓库。
-        （早期用过 Aspose 商业库，需要挂 releases.aspose.com；换成 Stirling 后已移除。）
+        文档转换走 Stirling Office Convert（MIT）+ LibreOffice 外部引擎，无商业授权组件。
     -->
     <dependencies>
         <!-- JavaFX 控件库；base / graphics 由传递依赖引入 -->
