@@ -1,5 +1,6 @@
 package com.daliwan.tool;
 
+import com.daliwan.tool.core.cli.OfficeCommand;
 import com.daliwan.tool.core.cli.PdfCommand;
 import com.daliwan.tool.core.ipc.InstanceBridge;
 import com.daliwan.tool.ui.MainView;
@@ -68,7 +69,13 @@ public class DaliwanApplication extends Application {
         root.selectFirst();
         // 窗口开着时，右键请求并到这个实例，但只在后台转：不切页、不前置、不抢焦点，
         // 结果照旧用独立卡片，和程序没开时看到的一模一样
-        bridge = InstanceBridge.start(PdfCommand::convertAsync);
+        bridge = InstanceBridge.start(request -> {
+            if (PdfCommand.FLAG.equals(request.flag())) {
+                PdfCommand.convertAsync(request.files());
+            } else {
+                OfficeCommand.convertAsync(request);
+            }
+        });
     }
 
     @Override

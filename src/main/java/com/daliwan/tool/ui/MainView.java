@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -77,12 +78,16 @@ public class MainView extends BorderPane {
             new NavEntry("cipher", "加密", "对称加密", "AES · DES · 3DES", SymmetricCipherPane::new),
             new NavEntry("rsa", "加密", "RSA", "密钥生成 · 加解密 · 签名验签", RsaPane::new),
             new NavEntry("office2pdf", "文档", "Office 转 PDF", "Word · Excel · PPT", DocConvertPane::new),
+            new NavEntry("pdf2office", "文档", "PDF 转 Office", "Word · Excel · PPT · 文本", PdfToOfficePane::new),
             new NavEntry("pdf-tools", "文档", "PDF 拆分合并", "按页提取 · 多文件合并", PdfToolsPane::new),
             new NavEntry("img2pdf", "文档", "图片转 PDF", "多图合成一份 PDF", ImageToPdfPane::new)
     );
 
-    /** 设置页里「右键菜单」开关的标识。 */
+    /** 设置页里「Office 转 PDF 右键菜单」开关的标识。 */
     private static final String SHELL_PDF_OPTION = "shell.pdf";
+
+    /** 设置页里「PDF 转 Office 右键菜单」开关的标识。 */
+    private static final String SHELL_OFFICE_OPTION = "shell.office";
 
     /** 设置页里「Win11 经典右键菜单」开关的标识。 */
     private static final String WIN11_MENU_OPTION = "win11.classic";
@@ -168,25 +173,48 @@ public class MainView extends BorderPane {
      * 只要开关是开着的，就把当前路径重新写一遍；路径没变则跳过，不做无谓的注册表操作。
      */
     private void restoreShellIntegration() {
-        if (!settings.shellPdfMenu() || !AppLauncher.isWindows()) {
+        if (!AppLauncher.isWindows()) {
+            return;
+        }
+        restoreGroup(settings.shellPdfMenu(), List.of(ContextMenuIntegration.TO_PDF),
+                settings.shellPdfCommand(), ContextMenuIntegration.TO_PDF,
+                command -> {
+                    settings.setShellPdfCommand(command);
+                    saveQuietly();
+                });
+        restoreGroup(settings.shellOfficeMenu(), ContextMenuIntegration.PDF_TO_OFFICE,
+                settings.shellOfficeCommand(), ContextMenuIntegration.PDF_TO_OFFICE.get(0),
+                command -> {
+                    settings.setShellOfficeCommand(command);
+                    saveQuietly();
+                });
+    }
+
+    /**
+     * 一组菜单项的路径校准。
+     *
+     * <p>用组内第一项的命令当作「当前路径签名」：五项命令只有开关不同，
+     * 路径变了必然一起变，比对一条就够。
+     */
+    private void restoreGroup(boolean enabled, List<ContextMenuIntegration.MenuVerb> verbs,
+                              String recorded, ContextMenuIntegration.MenuVerb sample,
+                              Consumer<String> onWritten) {
+        if (!enabled) {
             return;
         }
         final String expected;
         try {
-            expected = ContextMenuIntegration.currentCommand();
+            expected = ContextMenuIntegration.currentCommand(sample);
         } catch (IOException e) {
             return;
         }
-        if (expected.equals(settings.shellPdfCommand())) {
+        if (expected.equals(recorded)) {
             return;
         }
         Thread worker = new Thread(() -> {
             try {
-                ContextMenuIntegration.install();
-                Platform.runLater(() -> {
-                    settings.setShellPdfCommand(expected);
-                    saveQuietly();
-                });
+                ContextMenuIntegration.install(verbs);
+                Platform.runLater(() -> onWritten.accept(expected));
             } catch (Exception ignored) {
                 // 失败不打扰用户，设置页里再开一次会给出具体原因
             }
@@ -547,17 +575,29 @@ public class MainView extends BorderPane {
     private List<SettingsPane.Option> settingOptions() {
         boolean supported = ContextMenuIntegration.isSupported();
         boolean win11 = Win11Menu.isWindows11();
-        String note = supported
+        String devNote = "当前是开发模式运行，右键菜单需要在打包后的大力丸.exe 里启用";
+        String win11Hint = win11
+                ? "。Win11 下它会收在「显示更多选项」里，按 Shift + 右键可直接看到"
+                : "";
+        String pdfNote = supported
                 ? "写入当前用户注册表（HKCU），不需要管理员权限；"
-                        + "覆盖 " + ContextMenuIntegration.extensionSummary()
-                        + (win11 ? "。Win11 下它会收在「显示更多选项」里，按 Shift + 右键可直接看到" : "")
-                : "当前是开发模式运行，右键菜单需要在打包后的大力丸.exe 里启用";
+                        + "覆盖 " + ContextMenuIntegration.extensionSummary(List.of(ContextMenuIntegration.TO_PDF))
+                        + win11Hint
+                : devNote;
+        String officeNote = supported
+                ? "同样只写当前用户注册表；在 .pdf 上出现「转 Word / 转 Excel / 转 PPT / 提取文本」四项"
+                        + win11Hint
+                : devNote;
 
-        List<SettingsPane.Option> options = new ArrayList<>(2);
+        List<SettingsPane.Option> options = new ArrayList<>(3);
         options.add(new SettingsPane.Option(SHELL_PDF_OPTION, "系统集成",
-                "资源管理器右键菜单：转 PDF",
+                "右键菜单：Office 转 PDF",
                 "在 Word / Excel / PPT 文件上点右键，直接生成 PDF",
-                settings.shellPdfMenu(), supported, note));
+                settings.shellPdfMenu(), supported, pdfNote));
+        options.add(new SettingsPane.Option(SHELL_OFFICE_OPTION, "系统集成",
+                "右键菜单：PDF 转 Office",
+                "在 PDF 上点右键，转成 Word / Excel / PPT，或把文字提出来",
+                settings.shellOfficeMenu(), supported, officeNote));
         options.add(new SettingsPane.Option(WIN11_MENU_OPTION, "系统集成",
                 "Win11：换回经典右键菜单",
                 "让本软件的菜单项直接显示在第一层，代价是把整个系统换回 Win10 的长菜单",
@@ -575,18 +615,44 @@ public class MainView extends BorderPane {
         if (save) {
             settingsPane.snapshot().forEach(item -> settings.setVisible(item.id(), item.visible()));
 
-            boolean shellWanted = Boolean.TRUE.equals(
+            boolean pdfWanted = Boolean.TRUE.equals(
                     settingsPane.optionSnapshot().get(SHELL_PDF_OPTION));
-            boolean shellChanged = shellWanted != settings.shellPdfMenu();
-            settings.setShellPdfMenu(shellWanted);
+            boolean pdfChanged = pdfWanted != settings.shellPdfMenu();
+            settings.setShellPdfMenu(pdfWanted);
+
+            boolean officeWanted = Boolean.TRUE.equals(
+                    settingsPane.optionSnapshot().get(SHELL_OFFICE_OPTION));
+            boolean officeChanged = officeWanted != settings.shellOfficeMenu();
+            settings.setShellOfficeMenu(officeWanted);
 
             boolean win11Wanted = Boolean.TRUE.equals(
                     settingsPane.optionSnapshot().get(WIN11_MENU_OPTION));
             boolean win11Changed = win11Wanted != settings.win11ClassicMenu();
             saveQuietly();
             rebuildNav();
-            if (shellChanged) {
-                applyShellMenu(shellWanted);
+            if (pdfChanged) {
+                applyShellMenu(List.of(ContextMenuIntegration.TO_PDF),
+                        ContextMenuIntegration.TO_PDF, pdfWanted,
+                        command -> {
+                            settings.setShellPdfCommand(command);
+                            saveQuietly();
+                        },
+                        value -> {
+                            settings.setShellPdfMenu(value);
+                            saveQuietly();
+                        });
+            }
+            if (officeChanged) {
+                applyShellMenu(ContextMenuIntegration.PDF_TO_OFFICE,
+                        ContextMenuIntegration.PDF_TO_OFFICE.get(0), officeWanted,
+                        command -> {
+                            settings.setShellOfficeCommand(command);
+                            saveQuietly();
+                        },
+                        value -> {
+                            settings.setShellOfficeMenu(value);
+                            saveQuietly();
+                        });
             }
             if (win11Changed) {
                 if (win11Wanted && !confirmWin11Classic()) {
@@ -618,28 +684,25 @@ public class MainView extends BorderPane {
      * <p>写注册表要起 {@code reg import} 和一次外壳刷新，放在界面线程上会有明显停顿。
      * 失败时把开关回滚并说明原因，避免出现「开关是开的、菜单却没有」的假象。
      */
-    private void applyShellMenu(boolean enable) {
+    private void applyShellMenu(List<ContextMenuIntegration.MenuVerb> verbs,
+                               ContextMenuIntegration.MenuVerb sample,
+                               boolean enable,
+                               Consumer<String> onWritten,
+                               Consumer<Boolean> onRollback) {
         Thread worker = new Thread(() -> {
             try {
                 if (enable) {
-                    ContextMenuIntegration.install();
-                    String command = ContextMenuIntegration.currentCommand();
-                    Platform.runLater(() -> {
-                        settings.setShellPdfCommand(command);
-                        saveQuietly();
-                    });
+                    ContextMenuIntegration.install(verbs);
+                    String command = ContextMenuIntegration.currentCommand(sample);
+                    Platform.runLater(() -> onWritten.accept(command));
                 } else {
-                    ContextMenuIntegration.uninstall();
-                    Platform.runLater(() -> {
-                        settings.setShellPdfCommand("");
-                        saveQuietly();
-                    });
+                    ContextMenuIntegration.uninstall(verbs);
+                    Platform.runLater(() -> onWritten.accept(""));
                 }
             } catch (Exception e) {
                 String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                 Platform.runLater(() -> {
-                    settings.setShellPdfMenu(!enable);
-                    saveQuietly();
+                    onRollback.accept(!enable);
                     Alert alert = new Alert(Alert.AlertType.WARNING);
                     alert.setTitle("右键菜单");
                     alert.setHeaderText(enable ? "没能写入右键菜单" : "没能移除右键菜单");

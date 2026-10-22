@@ -89,6 +89,17 @@
         </dependency>
 
         <!--
+            同一个项目的 core 模块：反方向的 PDF → Office（DOCX / XLSX / PPTX / TXT / RTF / ODT），
+            靠 PDFBox 抽取排版信息再用 POI 写出，同样不需要 Office 或 LibreOffice。
+            与 topdf 共用 PDFBox 3.0.8，版本必须保持一致。
+        -->
+        <dependency>
+            <groupId>com.stirling</groupId>
+            <artifactId>stirling-office-convert</artifactId>
+            <version>${stirling.version}</version>
+        </dependency>
+
+        <!--
             SQL 美化：sql-formatter 的 Java 移植版，纯 Java、无额外依赖，
             支持 MySQL / PostgreSQL / Oracle / SQL Server 等方言。
         -->

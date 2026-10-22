@@ -61,7 +61,7 @@ public final class PdfCommand {
             return;
         }
         // 主窗口开着时只借用它的进程，本体该干什么还干什么，界面不动
-        if (InstanceBridge.forward(files)) {
+        if (InstanceBridge.forward(FLAG, files)) {
             log("[delegate] " + files.size() + " 个文件交给已运行的实例（后台转换）");
             return;
         }

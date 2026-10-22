@@ -35,6 +35,8 @@ public final class ToolSettings {
     private static final String THEME_EXPLICIT_KEY = "ui.theme.explicit";
     private static final String SHELL_PDF_KEY = "shell.pdf.menu";
     private static final String SHELL_PDF_COMMAND_KEY = "shell.pdf.menu.command";
+    private static final String SHELL_OFFICE_KEY = "shell.office.menu";
+    private static final String SHELL_OFFICE_COMMAND_KEY = "shell.office.menu.command";
     private static final String WIN11_CLASSIC_KEY = "shell.win11.classic";
 
     /** 主题名：跟随系统 / 深色 / 浅色。 */
@@ -51,6 +53,10 @@ public final class ToolSettings {
     private boolean shellPdfMenu;
     /** 上次写进注册表的命令行；程序目录被挪动后据此判断要不要重写。 */
     private String shellPdfCommand = "";
+    /** 是否已在 PDF 文件上注册「转 Word / Excel / PPT / 提取文本」。 */
+    private boolean shellOfficeMenu;
+    /** PDF 那一组菜单上次写入的命令行，同样用于路径变化检测。 */
+    private String shellOfficeCommand = "";
     /** 是否把 Win11 的右键菜单换回经典样式，让第三方菜单项直接显示。 */
     private boolean win11ClassicMenu;
 
@@ -104,6 +110,9 @@ public final class ToolSettings {
         settings.shellPdfMenu = "true".equalsIgnoreCase(
                 properties.getProperty(SHELL_PDF_KEY, "false").trim());
         settings.shellPdfCommand = properties.getProperty(SHELL_PDF_COMMAND_KEY, "").trim();
+        settings.shellOfficeMenu = "true".equalsIgnoreCase(
+                properties.getProperty(SHELL_OFFICE_KEY, "false").trim());
+        settings.shellOfficeCommand = properties.getProperty(SHELL_OFFICE_COMMAND_KEY, "").trim();
         settings.win11ClassicMenu = "true".equalsIgnoreCase(
                 properties.getProperty(WIN11_CLASSIC_KEY, "false").trim());
         return settings;
@@ -165,6 +174,25 @@ public final class ToolSettings {
         this.shellPdfCommand = command == null ? "" : command;
     }
 
+    /** 是否已在 PDF 文件的右键菜单里注册「转 Word / Excel / PPT / 提取文本」。 */
+    public boolean shellOfficeMenu() {
+        return shellOfficeMenu;
+    }
+
+    /** 记录 PDF 那一组右键菜单开关；真正的注册表写入由界面层负责。 */
+    public void setShellOfficeMenu(boolean enabled) {
+        this.shellOfficeMenu = enabled;
+    }
+
+    /** PDF 那组菜单最后一次成功写入的命令行，空串表示没有记录。 */
+    public String shellOfficeCommand() {
+        return shellOfficeCommand;
+    }
+
+    public void setShellOfficeCommand(String command) {
+        this.shellOfficeCommand = command == null ? "" : command;
+    }
+
     /** 是否已把 Win11 的新版右键菜单换回经典样式。 */
     public boolean win11ClassicMenu() {
         return win11ClassicMenu;
@@ -195,6 +223,8 @@ public final class ToolSettings {
         }
         properties.setProperty(SHELL_PDF_KEY, Boolean.toString(shellPdfMenu));
         properties.setProperty(SHELL_PDF_COMMAND_KEY, shellPdfCommand);
+        properties.setProperty(SHELL_OFFICE_KEY, Boolean.toString(shellOfficeMenu));
+        properties.setProperty(SHELL_OFFICE_COMMAND_KEY, shellOfficeCommand);
         properties.setProperty(WIN11_CLASSIC_KEY, Boolean.toString(win11ClassicMenu));
         try (Writer writer = new OutputStreamWriter(
                 Files.newOutputStream(file), StandardCharsets.UTF_8)) {

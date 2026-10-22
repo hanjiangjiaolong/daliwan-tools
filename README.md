@@ -18,7 +18,7 @@
 
 完整的逐项清单（含全局能力、技术选型、已知限制与后续建议）见 [docs/FEATURES.md](docs/FEATURES.md)。
 
-左侧导航共 17 个页面，按常用性从高到低排列：JSON、SQL（MyBatis 日志还原）、转换（时间戳/Base64/URL/Unicode）、生成（UUID · 随机串）、工具（二维码/比对/图片信息/OCR）、摘要、加密、文档七组；同组内也按使用频率排序，哈希摘要这类「偶尔核一下」的往后放。可在「界面设置」里按需隐藏——**隐藏不等于删掉**，被收起来的页面会进侧栏底部的「更多（N）」，点开就在导航末尾展开「已隐藏」一组，照常可以选中使用。
+左侧导航共 18 个页面，按常用性从高到低排列：JSON、SQL（MyBatis 日志还原）、转换（时间戳/Base64/URL/Unicode）、生成（UUID · 随机串）、工具（二维码/比对/图片信息/OCR）、摘要、加密、文档七组；同组内也按使用频率排序，哈希摘要这类「偶尔核一下」的往后放。可在「界面设置」里按需隐藏——**隐藏不等于删掉**，被收起来的页面会进侧栏底部的「更多（N）」，点开就在导航末尾展开「已隐藏」一组，照常可以选中使用。
 
 ![隐藏的页面收在「更多」里](docs/screenshot-nav-more.png)
 
@@ -154,15 +154,20 @@ Base64 页顶部切换「文本 / 图片」——两者本质是同一件事，�
 | 页面 | 能力 |
 | --- | --- |
 | Office 转 PDF | Word / Excel / PPT / CSV 批量转换，支持拖入，逐条显示成功与失败原因；可挂到右键菜单 |
+| PDF 转 Office | PDF 反解成 Word / Excel / PPT / 纯文本，目标格式下拉可选，同样支持拖入与右键菜单 |
 | PDF 拆分合并 | 按页码范围拆分（`1-3,5,7-9`），或多份 PDF 按顺序合并 |
 | 图片转 PDF | 多张图片合成一份 PDF，每图一页，可调整顺序 |
 
 ![PDF 工具](docs/screenshot-pdf.png)
 
-> Office 转 PDF 全部由**内置的 Stirling Office Convert**（MIT 开源）完成，不需要装 Office，
+> 两个方向的文档互转都由**内置的 Stirling Office Convert**（MIT 开源）完成，不需要装 Office，
 > 也不需要 LibreOffice：PDFBox + Apache POI 纯 Java 渲染，无水印、无外部进程。
 > 引擎按 Java 25 编译，构建与打包需要 JDK 25；低版本 JDK 上引擎不可用，
 > 会自动退回 LibreOffice（如果装了）。
+>
+> 区别在于保真方向：Office → PDF 是「渲染」，排版所见即所得；
+> PDF → Office 是「反解」，段落、标题、列表、表格会还原成真的 Office 元素，
+> 但复杂版式（多栏混排、艺术字、手写批注）只能近似——**转出来的是可编辑内容，不是像素级复刻**。
 > 与 PDF 拆分合并（纯结构操作，装好即可用）不同，排版引擎决定转换保真度。
 
 ### JSON
@@ -234,7 +239,7 @@ mvn javafx:run
 
 **主题切换**：标题栏右侧的图标按「跟随系统 → 浅色 → 深色」循环切换（图标分别是显示器 / 太阳 / 月亮），选择随界面设置一起保存。默认是**跟随系统**：启动时读 Windows 的 `AppsUseLightTheme`，窗口重新获得焦点时再读一次，因此在系统设置里切换明暗后切回窗口即可生效，不必重启。
 
-**还原默认值**：页脚的「恢复默认」和「取消 / 保存」放在一起，一次把所有开关拨回初始状态——导航项全部显示、系统集成两项全部关闭。点它会先在本页盖一层确认卡片（不另开系统对话框）：卡片用的是同一套配色与按钮，遮罩外点一下或按 `Esc` 都算取消。还原只改界面上的开关，点「保存」才写配置与注册表，因此误点了直接「取消」即可；保存时若原本开着右键菜单，会走和手动关闭同一条路径把注册表项一并清掉。主题不在这页，所以不受影响。
+**还原默认值**：页脚的「恢复默认」和「取消 / 保存」放在一起，一次把所有开关拨回初始状态——导航项全部显示、系统集成三项全部关闭。点它会先在本页盖一层确认卡片（不另开系统对话框）：卡片用的是同一套配色与按钮，遮罩外点一下或按 `Esc` 都算取消。还原只改界面上的开关，点「保存」才写配置与注册表，因此误点了直接「取消」即可；保存时若原本开着右键菜单，会走和手动关闭同一条路径把注册表项一并清掉。主题不在这页，所以不受影响。
 
 ![还原默认值](docs/screenshot-settings-reset.png)
 
@@ -242,7 +247,18 @@ mvn javafx:run
 
 **窗口尺寸**：初始宽高取屏幕可用区域的 62% × 84%，并限制在 880×620 到 1600×1000 之间，同时保证不超出可用区域；最小尺寸也随屏幕收缩，小屏上仍可继续缩小窗口。
 
-**资源管理器右键菜单**（设置页「系统集成」组）：打开开关后，在 `.doc` `.docx` `.rtf` `.odt` `.wps` `.xls` `.xlsx` `.xlsm` `.xlsb` `.csv` `.ods` `.ppt` `.pptx` `.pptm` `.pps` `.ppsx` `.odp` 这些文件上点右键，菜单里会多一项「大力丸 · 转 PDF」，点一下直接在源文件旁边生成同名 PDF。
+**资源管理器右键菜单**（设置页「系统集成」组）是两个独立开关，都只写当前用户的注册表，不需要管理员权限：
+
+| 开关 | 出现在哪些文件上 | 菜单项 | 结果 |
+| --- | --- | --- | --- |
+| Office 转 PDF | `.doc` `.docx` `.rtf` `.odt` `.xls` `.xlsx` `.xlsm` `.xlsb` `.csv` `.ods` `.ppt` `.pptx` `.pptm` `.pps` `.ppsx` `.odp` | 大力丸 · 转 PDF | 源文件旁边生成同名 PDF |
+| PDF 转 Office | `.pdf` | 大力丸 · 转 Word / 转 Excel / 转 PPT / 提取文本 | 分别生成 `.docx` / `.xlsx` / `.pptx` / `.txt` |
+
+点一下即在源文件所在目录生成结果，同名文件自动加序号，绝不覆盖。程序目录搬家后，启动时会按当前路径重写一遍注册表，不用手动再开一次开关。
+
+> 菜单项是「动词」驱动的（一个菜单项 = 一个注册表子键 + 一条命令行 + 一组扩展名），
+> 见 `core/shell/ContextMenuIntegration`：要加新格式，往 `PDF_TO_OFFICE` 里加一项即可，
+> 安装脚本、卸载脚本与 `.reg` 兜底都会自动跟上。
 
 Win11 换了新的精简右键菜单，只认实现了 `IExplorerCommand` 并带包标识的 COM 扩展，传统 `shell\command` 注册一律被折进「显示更多选项」（26H2 起还要先在上层菜单里把这一项打开才看得到）。绿色版不打包 MSIX，因此同一组里还有第二个开关：打开后往 `HKCU\Software\Classes\CLSID` 写一个指向空 `InprocServer32` 的键，外壳便退回经典菜单，这一项就直接出现在第一层。改完点「立即重启」重启一次资源管理器即可；关掉开关会删掉整棵键、恢复 Win11 默认外观。不想改菜单样式的话，`Shift + 右键`（或 `Shift + F10`）每次都能直接调出经典菜单。
 
@@ -306,13 +322,15 @@ mvn test
 | `SymmetricCipherTest` | 14 | 与 OpenSSL 对照的固定向量、全算法全模式往返、密钥与向量长度校验、错误密钥提示 |
 | `RsaServiceTest` | 12 | 密钥对生成、短/长明文分段往返、密文随机性、签名验签与篡改检测、OpenSSL PKCS#1 私钥互操作 |
 | `StirlingEngineTest` | 4 | 引擎扩展名清单、`.wps` 不注册、`supports` 匹配、可用性与 JDK 版本一致 |
+| `PdfToOfficeConverterTest` | 7 | 开关反查目标格式、扩展名识别、输出命名与防覆盖、真实 PDF 转 docx / txt、组件不可用时的提示 |
+| `OfficeCommandTest` | 4 | `--to-*` 开关识别与取值、文件参数收集、开关清单与转换目标一致 |
 | `MybatisLogParserTest` | 11 | Preparing/Parameters 定位、续行拼接、多语句、集合参数展开 |
 | `SqlAssemblerTest` | 13 | 占位符顺序替换、引号与 NULL 处理、跳过字符串与注释里的问号、方言差异 |
 | `SqlHighlighterTest` | 12 | 关键字/函数/字符串/数字分类、字面量与关键字区分、字符串内关键字不被切开、转义引号、行注释与块注释、反引号标识符、数字与指数、token 升序不重叠、中文标识符、真实拼接结果着色 |
 | `OcrServiceTest` | 5 | 引擎可用性、中英识别、空白图 |
 | `RandomServiceTest` | 9 | UUID 格式与批量、字符集、排除易混淆字符、长度边界 |
 | `PdfCommandTest` | 4 | 命令行参数解析、批量转换、失败信息 |
-| `ContextMenuIntegrationTest` | 10 | 17 种后缀的注册表项生成、命令行拼装、卸载脚本 |
+| `ContextMenuIntegrationTest` | 13 | 17 种后缀的注册表项生成、命令行拼装、PDF 组四个菜单项各写各的开关、卸载与 .reg 兜底 |
 | `Win11MenuTest` | 10 | CLSID 键路径、构建号解析（含 BOM / 空行 / 报错文本里的假数字）、HKCU 路径转换、安装与卸载脚本互为镜像、资源管理器重启脚本 |
 | `FileNamesTest` | 5 | 后缀大小写、重名追加序号、无扩展名 |
 | `PngEncoderTest` | 4 | 编码可解码、尺寸与像素一致 |
@@ -371,15 +389,16 @@ daliwan_tool/
     │   │   │   │   ├── SqlBeautifier.java      sql-formatter 封装 + 失败兜底
     │   │   │   │   ├── SqlHighlighter.java     语法着色分词（关键字 / 字符串 / 注释…）
     │   │   │   │   └── SqlDialect.java         方言枚举
-    │   │   │   ├── doc/                   文档转换（Stirling Office Convert + PDFBox）
-    │   │   │   ├── cli/                   命令行入口（右键菜单「转 PDF」）
+    │   │   │   ├── doc/                   文档互转（Stirling topdf / core + PDFBox）
+    │   │   │   ├── cli/                   命令行入口（右键菜单「转 PDF」「转 Word」…）
     │   │   │   │   ├── PdfCommand.java         解析 --to-pdf、批量转换并写日志
+    │   │   │   │   ├── OfficeCommand.java      解析 --to-docx / --to-xlsx / --to-pptx / --to-txt
     │   │   │   │   └── PdfResultDialog.java    右下角结果卡片（Swing 自绘，不拉 JavaFX）
     │   │   │   ├── ipc/
-    │   │   │   │   └── InstanceBridge.java     本地套接字：多选请求并到已开实例（后台转）
+    │   │   │   │   └── InstanceBridge.java     本地套接字：请求（开关 + 文件）并到已开实例
     │   │   │   └── shell/
     │   │   │       ├── AppLauncher.java        解析当前程序的启动命令（exe / java -jar）
-    │   │   │       ├── ContextMenuIntegration.java  右键菜单的注册表读写
+    │   │   │       ├── ContextMenuIntegration.java  右键菜单的注册表读写（多菜单项）
     │   │   │       └── Win11Menu.java          Win11 经典右键菜单开关与资源管理器重启
     │   │   ├── ui/
     │   │   │   ├── MainView.java          侧边导航与页面调度
@@ -527,7 +546,7 @@ CSV 是文本格式，中文 Excel 打开会连踩三个坑：无 BOM 乱码（�
 - 对称加密的明文按 UTF-8 处理，解密非文本（二进制）数据时结果会显示为乱码。
 - RSA 使用 PKCS#1 v1.5 填充，未实现 OAEP；新系统建议自行改用 OAEP 以获得更好的安全性。
 - OCR 用**内置的 RapidOCR**（PP-OCRv4 + ONNX Runtime，模型与动态库随程序分发，不再需要 Tesseract）。两个使用上的约束：一是首次识别要把约 28 MB 模型解压到系统临时目录，比后续慢几百毫秒（进页面时会后台预热，把这段等待挪到看图的时候）；二是 RapidOCR 一个 JVM 进程内只允许一种引擎与模型，首次调用后即固定，所以固定用 V4、不提供运行时切换。另外它的字典以中英文为主，日文 / 韩文等只能识别其中的汉字与拉丁部分。
-- Office 转 PDF 走**内嵌的 Stirling Office Convert**（MIT，`com.stirling:stirling-office-convert-topdf`）：PDFBox + POI 纯 Java 渲染，无水印、无评估弹窗、无授权文件。它按 Java 25 编译，整个项目的 `maven.compiler.release` 也跟着提到 25，打包脚本会优先找 JDK 25 并喂给 Maven。联动注意：Stirling 0.2.2 要求 PDFBox 3.0.8（它调用了 `TrueTypeFont.setEnableGsub`，3.0.2 上直接 `NoSuchMethodError`），pom 里 PDFBox 版本必须跟随。引擎不支持 WPS 私有格式，`.wps` 已从可转换列表移除。PDF 拆分合并与图片转 PDF 不依赖外部程序。
+- Office ⇄ PDF 走**内嵌的 Stirling Office Convert**（MIT）：`stirling-office-convert-topdf` 管 Office → PDF，同项目的 `stirling-office-convert`（core）管 PDF → Office（DOCX / XLSX / PPTX / TXT），两者共用 PDFBox + POI，无水印、无评估弹窗、无授权文件。它按 Java 25 编译，整个项目的 `maven.compiler.release` 也跟着提到 25，打包脚本会优先找 JDK 25 并喂给 Maven。联动注意：Stirling 0.2.2 要求 PDFBox 3.0.8（它调用了 `TrueTypeFont.setEnableGsub`，3.0.2 上直接 `NoSuchMethodError`），pom 里 PDFBox 版本必须跟随。引擎不支持 WPS 私有格式，`.wps` 已从可转换列表移除。PDF 拆分合并与图片转 PDF 不依赖外部程序。
 - JSON 树视图节点上限 20 万个；超过 3000 个节点时「展开全部」只展开三层。
 - 去除元信息对 JPEG / PNG / WebP / GIF 是无损剪裁，对 BMP / TIFF 退回重编码（画质与体积都可能变化）；HEIC / RAW 等需要专门解码器的格式暂不支持，会明确提示先转成 JPEG 或 PNG。结构异常、剪不动的文件同样走重编码兜底，不会把原图改坏。
 - **拖放全程不碰 `getDragboard()`，只在放下那一刻读一次文件列表**：`hasFiles()` 看着像读个布尔值，实际要穿过 JNI 调 Windows 的 `IDataObject::EnumFormatEtc`——拖拽源程序（资源管理器、浏览器、聊天工具）得把数据对象上挂的每一种格式都准备好才能枚举完，拖图片时还会临时拉起缩略图 / 属性处理器这类 Shell 扩展，一次几百毫秒到几秒不等，且**同步阻塞在界面线程上**。`DRAG_OVER` 每秒几十次、`DRAG_ENTERED` 还会随指针穿过子节点反复触发，只要在其中任何一个里问一句 `hasFiles()`，界面就一卡一卡甚至彻底冻住——表现就是「文件刚进窗口就死了」。所有页面统一走 `UiKit.installFileDrop()`：悬停阶段只 `acceptTransferModes`（不跨进程），内容是不是文件等 `DRAG_DROPPED` 再看，不是文件就 `setDropCompleted(false)`。另外高亮状态用场景坐标判断是否真的离开投放区，避免在子节点之间移动时样式反复重算。每次拖拽结束会在 `~/.daliwan/dnd.log` 追加一行：**界面最大间隔**是相邻两次 `DRAG_OVER` 的最大间隔，直接反映界面线程被堵了多久（正常个位数毫秒），排障时先看它。

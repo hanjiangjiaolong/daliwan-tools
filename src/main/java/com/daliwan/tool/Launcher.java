@@ -1,5 +1,6 @@
 package com.daliwan.tool;
 
+import com.daliwan.tool.core.cli.OfficeCommand;
 import com.daliwan.tool.core.cli.PdfCommand;
 
 /**
@@ -9,8 +10,8 @@ import com.daliwan.tool.core.cli.PdfCommand;
  * JVM 启动会报 “JavaFX runtime components are missing”。用一个普通类转一道，
  * 即可通过 {@code java -cp ... Launcher} 正常启动。
  *
- * <p>这里也是右键菜单的入口：带 {@code --to-pdf} 参数时只做一次转换就退出，
- * 不拉起 JavaFX。
+ * <p>这里也是右键菜单的入口：带转换开关（{@code --to-pdf}、{@code --to-docx} …）时
+ * 只做一次转换就退出，不拉起 JavaFX。
  */
 public final class Launcher {
 
@@ -20,6 +21,10 @@ public final class Launcher {
     public static void main(String[] args) {
         if (PdfCommand.matches(args)) {
             PdfCommand.run(args);
+            return;
+        }
+        if (OfficeCommand.matches(args)) {
+            OfficeCommand.run(args);
             return;
         }
         DaliwanApplication.main(args);

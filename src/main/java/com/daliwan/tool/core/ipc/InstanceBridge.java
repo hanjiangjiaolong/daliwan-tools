@@ -32,16 +32,25 @@ import java.util.function.Consumer;
  */
 public final class InstanceBridge implements AutoCloseable {
 
-    private static final String MAGIC = "DALIWAN-PDF-1";
+    /**
+     * 一次右键菜单请求：要做什么（命令行开关）+ 对哪些文件做。
+     *
+     * <p>光有文件列表不够：右键菜单现在既有「转 PDF」也有「转 Word / Excel / PPT / 文本」，
+     * 转发过去之后必须知道当初点的是哪一项，否则主窗口只能猜。
+     */
+    public record Request(String flag, List<Path> files) {
+    }
+
+    private static final String MAGIC = "DALIWAN-CONV-1";
     private static final Path PORT_FILE = Path.of(
             System.getProperty("user.home"), ".daliwan", "instance.port");
 
     private final ServerSocket server;
-    private final Consumer<List<Path>> sink;
+    private final Consumer<Request> sink;
     private final Thread acceptor;
     private volatile boolean closed;
 
-    private InstanceBridge(ServerSocket server, Consumer<List<Path>> sink) {
+    private InstanceBridge(ServerSocket server, Consumer<Request> sink) {
         this.server = server;
         this.sink = sink;
         this.acceptor = new Thread(this::acceptLoop, "daliwan-instance-bridge");
@@ -49,7 +58,8 @@ public final class InstanceBridge implements AutoCloseable {
     }
 
     /** 启动监听；失败时返回 null（右键菜单会退回「自己转」的单进程模式）。 */
-    public static InstanceBridge start(Consumer<List<Path>> sink) {        try {
+    public static InstanceBridge start(Consumer<Request> sink) {
+        try {
             ServerSocket server = new ServerSocket(0, 8, InetAddress.getLoopbackAddress());
             server.setSoTimeout(800);
             InstanceBridge bridge = new InstanceBridge(server, sink);
@@ -96,6 +106,12 @@ public final class InstanceBridge implements AutoCloseable {
                 respond(socket, "ERR");
                 return;
             }
+            // 第二行是命令行开关（--to-pdf / --to-docx …），决定这批文件要怎么转
+            String flag = reader.readLine();
+            if (flag == null || flag.isBlank()) {
+                respond(socket, "ERR");
+                return;
+            }
             List<Path> files = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -108,7 +124,7 @@ public final class InstanceBridge implements AutoCloseable {
             if (!files.isEmpty()) {
                 // 回调本身可能在任意线程；切到界面线程的事由调用方负责，
                 // 这样 core 包不用引用 JavaFX
-                sink.accept(files);
+                sink.accept(new Request(flag, files));
             }
         } catch (Exception ignored) {
             // 单个连接出错不能拖垮监听线程
@@ -127,12 +143,14 @@ public final class InstanceBridge implements AutoCloseable {
     }
 
     /**
-     * 把文件递给已经在运行的窗口。
+     * 把请求递给已经在运行的窗口。
      *
+     * @param flag  命令行开关，如 {@code --to-pdf}、{@code --to-docx}
+     * @param files 要处理的文件
      * @return true 表示递到了，调用方应当直接退出
      */
-    public static boolean forward(List<Path> files) {
-        if (files.isEmpty()) {
+    public static boolean forward(String flag, List<Path> files) {
+        if (files == null || files.isEmpty() || flag == null || flag.isBlank()) {
             return false;
         }
         int port = readPort();
@@ -144,6 +162,8 @@ public final class InstanceBridge implements AutoCloseable {
             socket.setSoTimeout(1500);
             Writer writer = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8);
             writer.write(MAGIC);
+            writer.write('\n');
+            writer.write(flag);
             writer.write('\n');
             for (Path file : files) {
                 writer.write(file.toAbsolutePath().toString());

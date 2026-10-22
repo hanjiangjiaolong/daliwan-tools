@@ -143,6 +143,29 @@ class ToolSettingsTest {
     }
 
     @Test
+    @DisplayName("PDF 转 Office 的右键菜单开关默认关闭")
+    void shellOfficeMenuDefaultsOff(@TempDir Path dir) {
+        assertFalse(ToolSettings.load(dir.resolve("missing.properties")).shellOfficeMenu());
+    }
+
+    @Test
+    @DisplayName("两组右键菜单各自独立保存，互不覆盖")
+    void persistsBothShellMenus(@TempDir Path dir) throws Exception {
+        Path file = dir.resolve("settings.properties");
+
+        ToolSettings first = ToolSettings.load(file);
+        first.setShellOfficeMenu(true);
+        first.setShellOfficeCommand("\"C:\\Tools\\大力丸.exe\" --to-docx \"%1\"");
+        first.save();
+
+        ToolSettings reloaded = ToolSettings.load(file);
+        assertTrue(reloaded.shellOfficeMenu());
+        assertEquals("\"C:\\Tools\\大力丸.exe\" --to-docx \"%1\"", reloaded.shellOfficeCommand());
+        assertFalse(reloaded.shellPdfMenu(), "PDF 转 Office 开着不该顺手打开 Office 转 PDF");
+        assertTrue(Files.readString(file).contains("shell.office.menu=true"));
+    }
+
+    @Test
     @DisplayName("旧配置文件没有右键菜单项时按关闭处理")
     void legacyFileWithoutShellKey(@TempDir Path dir) throws Exception {
         Path file = dir.resolve("settings.properties");
@@ -150,6 +173,7 @@ class ToolSettingsTest {
 
         ToolSettings settings = ToolSettings.load(file);
         assertFalse(settings.shellPdfMenu());
+        assertFalse(settings.shellOfficeMenu());
         assertFalse(settings.isVisible("rsa"));
     }
 
