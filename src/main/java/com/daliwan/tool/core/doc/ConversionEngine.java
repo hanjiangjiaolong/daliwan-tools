@@ -9,8 +9,8 @@ import java.nio.file.Path;
  * Word 里的字体、分页、表格、页眉页脚都要经过布局计算，因此本工具不自己实现转换，
  * 而是对接成熟的引擎：
  * <ul>
- *   <li>{@link LibreOfficeEngine}：开源免费，转换结果与 LibreOffice 打开时一致</li>
- *   <li>{@link AsposeEngine}：商业库，保真度最高，需授权</li>
+ *   <li>{@link StirlingEngine}：内置开源引擎（MIT），纯 Java 渲染，无需安装 Office</li>
+ *   <li>{@link LibreOfficeEngine}：兜底引擎，转换结果与 LibreOffice 打开时一致</li>
  * </ul>
  */
 public interface ConversionEngine {

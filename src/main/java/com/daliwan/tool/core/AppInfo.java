@@ -33,7 +33,7 @@ public final class AppInfo {
     }
 
     private static final List<Credit> CREDITS = List.of(
-            new Credit("Aspose Words / Cells / Slides", "Word、Excel、PPT 与 PDF 互转", "评估版"),
+            new Credit("Stirling Office Convert / PDFBox / POI", "Word、Excel、PPT 与 PDF 互转", "MIT / Apache-2.0"),
             new Credit("Apache Fesod / POI", "表格导出 xlsx", "Apache-2.0"),
             new Credit("Apache PDFBox", "PDF 合并、拆分、提取", "Apache-2.0"),
             new Credit("Jackson", "JSON 解析、格式化与校验", "Apache-2.0"),

@@ -10,7 +10,7 @@ REM  用法：
 REM    build-jpackage.bat            完整打包并压缩
 REM    build-jpackage.bat nopause    不暂停（脚本/CI 用）
 REM
-REM  需要：JDK 17+（带 jpackage，脚本会自动找）+ Maven
+REM  需要：JDK 25+（Stirling 引擎按 Java 25 编译；脚本会自动找）+ Maven
 REM  不需要：GraalVM / VS Build Tools / WiX
 REM  无 WiX 时 jpackage 只能出 app-image（目录形态），不能出安装器；
 REM  目录形态照样是绿色版，整个文件夹拷走或压缩即可。
@@ -39,6 +39,13 @@ if not defined MVN (
 
 REM ---------- 定位带 jpackage 的 JDK ----------
 set "JDK="
+REM  引擎要求 Java 25+：优先找 JDK 25.x（GraalVM / Temurin / Oracle 皆可）。
+for /d %%d in ("C:\Program Files\Eclipse Adoptium\jdk-25*") do (
+    if exist "%%d\bin\jpackage.exe" set "JDK=%%d"
+)
+for /d %%a in ("D:\soft\graalvm-jdk-25*") do for /d %%d in ("%%a\graalvm-jdk-25*") do (
+    if exist "%%d\bin\jpackage.exe" set "JDK=%%d"
+)
 if defined JAVA_HOME if exist "%JAVA_HOME%\bin\jpackage.exe" set "JDK=%JAVA_HOME%"
 if not defined JDK for /d %%d in ("C:\Program Files\Eclipse Adoptium\jdk-*") do (
     if exist "%%d\bin\jpackage.exe" set "JDK=%%d"
@@ -47,12 +54,16 @@ if not defined JDK for /d %%d in ("C:\Program Files\Java\jdk-*") do (
     if exist "%%d\bin\jpackage.exe" set "JDK=%%d"
 )
 if not defined JDK (
-    echo [错误] 未找到带 jpackage 的 JDK（需要 JDK 17 及以上）
+    echo [错误] 未找到带 jpackage 的 JDK（建议 JDK 25 及以上，Stirling 引擎需要 Java 25）
     goto fail
 )
 
 echo 使用 Maven: %MVN%
 echo 使用 JDK  : %JDK%
+REM  maven 编译也必须用同一个 JDK：Stirling 按 Java 25 编译，用 21 会直接报错
+set "JAVA_HOME=%JDK%"
+set "PATH=%JDK%\bin;%PATH%"
+
 
 REM ---------- 1/4 可执行 jar ----------
 echo [1/4] 打可执行 jar（maven-shade，含全部依赖与 JavaFX 原生库）...
@@ -101,7 +112,7 @@ if exist "dist" rmdir /s /q "dist"
     --main-jar daliwan_tool.jar --main-class com.daliwan.tool.Launcher ^
     --runtime-image target\runtime ^
     --icon src\windows\assets\icon.ico ^
-    --java-options "-Dfile.encoding=UTF-8"
+    --java-options "-Dfile.encoding=UTF-8 --enable-native-access=ALL-UNNAMED"
 if errorlevel 1 goto fail
 if not exist "dist\daliwan_tool\daliwan_tool.exe" (
     echo [错误] dist\daliwan_tool\daliwan_tool.exe 未生成

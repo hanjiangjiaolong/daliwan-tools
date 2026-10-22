@@ -19,15 +19,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <javafx.version>21.0.6</javafx.version>
         <jackson.version>2.17.2</jackson.version>
         <richtextfx.version>0.11.7</richtextfx.version>
         <zxing.version>3.5.4</zxing.version>
-        <pdfbox.version>3.0.2</pdfbox.version>
-        <aspose.words.version>22.12-jdk17</aspose.words.version>
-        <aspose.cells.version>22.12</aspose.cells.version>
-        <aspose.slides.version>22.12</aspose.slides.version>
+        <pdfbox.version>3.0.8</pdfbox.version>
+        <stirling.version>0.2.2</stirling.version>
         <rapidocr.version>0.0.7</rapidocr.version>
         <sql.formatter.version>2.0.5</sql.formatter.version>
         <fesod.version>2.0.2-incubating</fesod.version>
@@ -41,16 +39,6 @@
         Aspose.Words 早期是靠手工放进本地仓库的，Cells/Slides 加进来后
         统一走这个仓库，换机器后 mvn package 才能自动拉全。
     -->
-    <repositories>
-        <repository>
-            <id>aspose-java</id>
-            <url>https://releases.aspose.com/java/repo/</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <dependencies>
         <!-- JavaFX 控件库；base / graphics 由传递依赖引入 -->
         <dependency>
@@ -79,7 +67,9 @@
         </dependency>
 
         <!--
-            PDF 结构操作（拆分 / 合并 / 图片成页）。直接用 PDFBox，不用二次封装。
+            PDF 结构操作（拆分 / 合并 / 图片成页），也是 Stirling 引擎的底层。
+            版本跟随 Stirling 的要求（3.0.8），不要单独降级，否则 fontbox
+            缺 TrueTypeFont.setEnableGsub 会直接 NoSuchMethodError。
         -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
@@ -88,42 +78,14 @@
         </dependency>
 
         <!--
-            Word → PDF 的排版引擎，直接内嵌进程序。
-            早期是运行时从 lib 目录加载 jar + 反射调用，但打进可执行 jar 后
-            类路径已被 shade 重写，反射加载既没必要也容易出错，
-            所以改成编译期依赖 + 直接调用。
-
-            注意这份构件不在公共仓库（Aspose 官方坐标是 aspose-words:22.12:jdk17，
-            评估版会给每页打 "Evaluation Only" 水印），它来自项目早期的本地仓库，
-            转换输出没有水印。换构建机时要么把 jar 放进本地 ~/.m2，要么改用官方
-            构件并接受水印/自备授权文件。有授权时把 Aspose.Words.Java.lic
-            放到程序目录或 lib 下即可自动生效。
+            Office → PDF 引擎：Stirling Office Convert（MIT 开源，dromara 之外的
+            Stirling PDF 团队出品），基于 PDFBox + POI 纯 Java 渲染，无外部进程。
+            要求 Java 25+（打包脚本用 GraalVM/Temurin 25 构建）。
         -->
         <dependency>
-            <groupId>com.aspose</groupId>
-            <artifactId>com.aspose.words</artifactId>
-            <version>${aspose.words.version}</version>
-        </dependency>
-
-        <!--
-            Excel → PDF：Aspose.Cells。纯 Java，不要求装 Office / LibreOffice。
-            构件在 Aspose 自家仓库，体积约 8 MB。
-        -->
-        <dependency>
-            <groupId>com.aspose</groupId>
-            <artifactId>aspose-cells</artifactId>
-            <version>${aspose.cells.version}</version>
-        </dependency>
-
-        <!--
-            PPT → PDF：Aspose.Slides。JDK 16 以后要用 jdk16 分类器的那份，
-            基础 jar 是给老 JDK 编的，直接用在 21 上会踩到内部 API 变更。
-        -->
-        <dependency>
-            <groupId>com.aspose</groupId>
-            <artifactId>aspose-slides</artifactId>
-            <version>${aspose.slides.version}</version>
-            <classifier>jdk16</classifier>
+            <groupId>com.stirling</groupId>
+            <artifactId>stirling-office-convert-topdf</artifactId>
+            <version>${stirling.version}</version>
         </dependency>
 
         <!--

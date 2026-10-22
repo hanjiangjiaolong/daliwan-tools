@@ -194,9 +194,9 @@
 
 | 功能点 | 说明 |
 | --- | --- |
-| Word 系 | `doc` `docx` `rtf` `odt` `wps` → Aspose.Words |
-| Excel 系 | `xls` `xlsx` `xlsm` `xlsb` `csv` `ods` → Aspose.Cells |
-| PPT 系 | `ppt` `pptx` `pptm` `pps` `ppsx` `odp` → Aspose.Slides |
+| Word 系 | `doc` `docx` `rtf` `odt` → Stirling（`wps` 不在上游支持范围，已移除） |
+| Excel 系 | `xls` `xlsx` `xlsm` `xlsb` `csv` `ods` → Stirling |
+| PPT 系 | `ppt` `pptx` `pptm` `pps` `ppsx` `odp` → Stirling |
 | 批量 | 列表式排队，逐个显示「转换中 / ✓ 输出文件名 / ✗ 失败原因」 |
 | 输出规则 | 输出到源文件所在目录，同名文件不覆盖（自动加序号） |
 | 输入方式 | 拖入文件或点「添加文件」 |
@@ -230,7 +230,7 @@
 | 主题 | 跟随系统 / 浅色 / 深色三态循环切换，选过就记住；跟随系统时窗口重新获得焦点会重探 |
 | 界面设置 | 17 个页面里不需要的可以逐个隐藏，保存后左侧导航立即刷新；隐藏项不会被删掉，会收进侧栏底部的「更多（N）」里，点开在导航末尾展开「已隐藏」一组，随时可以再进去 |
 | 还原默认值 | 页脚「恢复默认」一键把本页开关拨回初始状态：导航项全显示、系统集成两项全关；确认用页内遮罩卡片（点外侧或 `Esc` 取消），只改界面，点「保存」才写入并走同一条路径清理注册表；主题由右上角按钮控制，不受影响 |
-| 关于 | 顶栏设置按钮旁的 ⓘ 弹窗：版本（jar 清单读取）、Java 运行时与系统、配置文件路径、「本地运行不联网」、第三方组件及许可（Aspose 评估版、其余 Apache-2.0 / BSD-2 等，未声明的写「宽松开源许可」）；「复制版本信息」一键复制排障信息，`Esc` 关闭；数据在 `core/AppInfo`，可单测 |
+| 关于 | 顶栏设置按钮旁的 ⓘ 弹窗：版本（jar 清单读取）、Java 运行时与系统、配置文件路径、「本地运行不联网」、第三方组件及许可（Stirling=MIT、其余 Apache-2.0 / BSD-2 等，未声明的写「宽松开源许可」）；「复制版本信息」一键复制排障信息，`Esc` 关闭；数据在 `core/AppInfo`，可单测 |
 | 系统集成 | 资源管理器右键「大力丸 · 转 PDF」，覆盖 17 种 Office 后缀，可开关；程序目录搬家后启动时自动重写注册表 |
 | Win11 一级菜单 | Win11 把传统菜单项收进「显示更多选项」，可一键换回经典菜单（HKCU 下写一个空 `InprocServer32`，重启资源管理器生效，可随时撤销）。**这是全局改动**：所有程序的右键都变成 Win10 长菜单，所以默认关闭、勾选后保存时再确认一次；不改样式时 `Shift + 右键` 也能直接调出 |
 | 单实例聚合 | 右键连续点多个文件时，用本地套接字（`127.0.0.1` 随机端口）把请求并到已开实例，不重复起进程；只借进程不改界面 |
@@ -248,16 +248,16 @@
 
 | 层 | 选型 |
 | --- | --- |
-| 运行时 | JDK 21 + JavaFX 21（界面） |
+| 运行时 | JDK 25 + JavaFX 21（界面；JavaFX 21 在 JDK 25 上实测正常） |
 | PDF | Apache PDFBox 3.0.2（拆分 / 合并 / 图片转 PDF / 文本提取） |
 | 二维码 | ZXing 3.5.4（生成 + 识别） |
 | 图片元数据 | metadata-extractor（EXIF / IPTC / XMP） |
 | JSON | Jackson（解析与树构建） |
 | SQL 美化 | sql-formatter 2.0.5（Java 移植版，5 种方言） |
 | OCR | RapidOCR 0.0.7 + PP-OCRv4 ONNX 模型（本地推理） |
-| Office | Aspose.Words / Cells / Slides 22.12（内嵌，无需 Office / LibreOffice） |
+| Office | Stirling Office Convert 0.2.2 + PDFBox 3.0.8 + POI 5.5.1（MIT / Apache-2.0，内嵌，无需 Office / LibreOffice；需 Java 25） |
 | 打包 | maven-shade（可执行 fat jar）→ jlink（精简运行时）→ jpackage（app-image）→ zip |
-| 体积 | fat jar 112 MB ｜ 绿色版 zip 134 MB ｜ 解压后 160 MB（运行时 52 MB + 应用 108 MB）<br>大头：Aspose 四十四 MB、OCR 模型与动态库二十 MB、POI + fesod 十二 MB、JavaFX 六 MB；本程序代码 0.4 MB |
+| 体积 | fat jar 63 MB ｜ 绿色版 zip 95 MB ｜ 解压后 115 MB（运行时 52 MB + 应用 63 MB）<br>大头：OCR 模型与动态库二十 MB、POI + fesod 十二 MB、Stirling + PDFBox 六 MB、JavaFX 六 MB；本程序代码 0.4 MB |
 | 质量 | 304 个单元测试，`core` 层不引用 JavaFX，界面切换集中在应用入口 |
 
 ---
@@ -266,8 +266,7 @@
 
 | 限制 | 现状与原因 |
 | --- | --- |
-| Excel / PPT 输出带水印 | 用的是 Aspose 评估版，每页有 `Evaluation Only` 水印；把 `Aspose.Cells.Java.lic`、`Aspose.Slides.Java.lic` 放到程序目录或 `lib/` 下即自动生效 |
-| Word 无水印 | 用的是项目早期那份私有构件，官方 `aspose-words` 的评估版反而会打水印，所以没有替换 |
+| `.wps` 不再支持 | Stirling 引擎不支持 WPS 私有格式，可转换列表已移除；需要时先用 WPS 另存为 docx |
 | PPT 在受限环境会失败 | 评估版 Slides 初始化时要调 `reg.exe` 读 Shell Folders 定位字体，被安全策略禁用 reg 的机器上会报错 |
 | 图片转 PDF 无版式选项 | 每页就是图片原始尺寸，没有 A4 适配、页边距、统一页面尺寸，打印会大小不一 |
 | PDF 能力偏基础 | 只有拆分与合并，没有压缩、加密、页面旋转 / 删除 / 重排、加水印、提取图片 |
@@ -322,11 +321,11 @@
 
 ### D. 工程与发布
 
-13. **体积**：134 MB 里 Aspose 三件套（44 MB）和 OCR 模型（20 MB）占一半。运行时已用 jlink 裁到 52 MB、
-    v3 模型已剔除，再往下的空间在功能上：可以做「精简版」（只含文本 + PDF，约 30 MB）与「完整版」两条线，
-    或者把 PPT 引擎改成首次使用时下载。
+13. **体积**：换掉 Aspose 三件套（44 MB）后 zip 已从 134 MB 降到 95 MB，剩下的空间大头是
+    OCR 模型（20 MB）与表格 / 文档引擎。运行时已用 jlink 裁到 52 MB，再往下的空间在功能上：
+    可以做「精简版」（只含文本 + PDF，约 30 MB）与「完整版」两条线，或者把 PPT 引擎改成首次使用时下载。
 14. **安装包**：装 WiX 出 msi，或用 Inno Setup 包一层绿色版目录，换来卸载项、文件关联、开机启动。
-15. **引擎策略可配置**：设置里给「优先 Aspose / 优先 LibreOffice」，让有水印顾虑的用户自己选；
+15. **引擎策略可配置**：设置里给「优先内置引擎 / 优先 LibreOffice」的开关；
     LibreOffice 探测逻辑已经写好，只是没暴露成开关。
 16. **UI 自动化冒烟**：190 个测试集中在 `core`，界面靠截图自检。可引入 TestFX 跑「启动 → 逐页切换 → 关键按钮」，
     把现在手写的 `tools/*Check.java` 固化成 CI 步骤。

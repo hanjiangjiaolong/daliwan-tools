@@ -159,10 +159,10 @@ Base64 页顶部切换「文本 / 图片」——两者本质是同一件事，�
 
 ![PDF 工具](docs/screenshot-pdf.png)
 
-> Office 转 PDF 全部由**内置的 Aspose** 完成，不需要装 Office，也不需要 LibreOffice：
-> Word 走 Aspose.Words（项目内置的无水印构件），Excel 走 Aspose.Cells，PPT 走 Aspose.Slides。
-> 后两者是官方评估版构件，未放授权文件时导出的 PDF 每页带 `Evaluation Only` 水印，
-> 把 `Aspose.Cells.Java.lic` / `Aspose.Slides.Java.lic` 放到程序目录或 `lib/` 下即可去除。
+> Office 转 PDF 全部由**内置的 Stirling Office Convert**（MIT 开源）完成，不需要装 Office，
+> 也不需要 LibreOffice：PDFBox + Apache POI 纯 Java 渲染，无水印、无外部进程。
+> 引擎按 Java 25 编译，构建与打包需要 JDK 25；低版本 JDK 上引擎不可用，
+> 会自动退回 LibreOffice（如果装了）。
 > 与 PDF 拆分合并（纯结构操作，装好即可用）不同，排版引擎决定转换保真度。
 
 ### JSON
@@ -200,7 +200,7 @@ Base64 页顶部切换「文本 / 图片」——两者本质是同一件事，�
 
 ## 环境要求
 
-- JDK 21 或更高（`maven.compiler.release=21`）
+- JDK 25 或更高（`maven.compiler.release=25`；Stirling 引擎按 Java 25 编译）
 - Maven 3.9+
 
 ## 运行
@@ -238,7 +238,7 @@ mvn javafx:run
 
 ![还原默认值](docs/screenshot-settings-reset.png)
 
-**关于**：右上角设置按钮旁边的 ⓘ 按钮弹出「关于」窗口——版本号（打包时从 jar 清单读取，开发期退回固定值）、Java 运行时与操作系统、配置文件路径、「本地运行，不联网」的说明、以及第三方组件（Aspose、Apache Fesod / POI、PDFBox、Jackson、RichTextFX、ZXing、RapidOCR）各自按其许可证使用。左下角有「复制版本信息」按钮，反馈问题时一键把排障信息整段复制走；`Esc` 或「关闭」退出。数据统一放在 `core/AppInfo`（纯 Java，可单测），弹窗只负责排版。
+**关于**：右上角设置按钮旁边的 ⓘ 按钮弹出「关于」窗口——版本号（打包时从 jar 清单读取，开发期退回固定值）、Java 运行时与操作系统、配置文件路径、「本地运行，不联网」的说明、以及第三方组件（Stirling Office Convert、Apache Fesod / POI、PDFBox、Jackson、RichTextFX、ZXing、RapidOCR）各自按其许可证使用。左下角有「复制版本信息」按钮，反馈问题时一键把排障信息整段复制走；`Esc` 或「关闭」退出。数据统一放在 `core/AppInfo`（纯 Java，可单测），弹窗只负责排版。
 
 **窗口尺寸**：初始宽高取屏幕可用区域的 62% × 84%，并限制在 880×620 到 1600×1000 之间，同时保证不超出可用区域；最小尺寸也随屏幕收缩，小屏上仍可继续缩小窗口。
 
@@ -305,7 +305,7 @@ mvn test
 | `PdfOperationTest` | 10 | 合并页数与顺序、图片成页尺寸、格式校验、合并后再拆分 |
 | `SymmetricCipherTest` | 14 | 与 OpenSSL 对照的固定向量、全算法全模式往返、密钥与向量长度校验、错误密钥提示 |
 | `RsaServiceTest` | 12 | 密钥对生成、短/长明文分段往返、密文随机性、签名验签与篡改检测、OpenSSL PKCS#1 私钥互操作 |
-| `AsposeEngineTest` | 5 | 三套引擎的后缀覆盖、格式分派、授权状态探测 |
+| `StirlingEngineTest` | 4 | 引擎扩展名清单、`.wps` 不注册、`supports` 匹配、可用性与 JDK 版本一致 |
 | `MybatisLogParserTest` | 11 | Preparing/Parameters 定位、续行拼接、多语句、集合参数展开 |
 | `SqlAssemblerTest` | 13 | 占位符顺序替换、引号与 NULL 处理、跳过字符串与注释里的问号、方言差异 |
 | `SqlHighlighterTest` | 12 | 关键字/函数/字符串/数字分类、字面量与关键字区分、字符串内关键字不被切开、转义引号、行注释与块注释、反引号标识符、数字与指数、token 升序不重叠、中文标识符、真实拼接结果着色 |
@@ -371,7 +371,7 @@ daliwan_tool/
     │   │   │   │   ├── SqlBeautifier.java      sql-formatter 封装 + 失败兜底
     │   │   │   │   ├── SqlHighlighter.java     语法着色分词（关键字 / 字符串 / 注释…）
     │   │   │   │   └── SqlDialect.java         方言枚举
-    │   │   │   ├── doc/                   文档转换（Aspose Words / Cells / Slides + PDFBox）
+    │   │   │   ├── doc/                   文档转换（Stirling Office Convert + PDFBox）
     │   │   │   ├── cli/                   命令行入口（右键菜单「转 PDF」）
     │   │   │   │   ├── PdfCommand.java         解析 --to-pdf、批量转换并写日志
     │   │   │   │   └── PdfResultDialog.java    右下角结果卡片（Swing 自绘，不拉 JavaFX）
@@ -527,7 +527,7 @@ CSV 是文本格式，中文 Excel 打开会连踩三个坑：无 BOM 乱码（�
 - 对称加密的明文按 UTF-8 处理，解密非文本（二进制）数据时结果会显示为乱码。
 - RSA 使用 PKCS#1 v1.5 填充，未实现 OAEP；新系统建议自行改用 OAEP 以获得更好的安全性。
 - OCR 用**内置的 RapidOCR**（PP-OCRv4 + ONNX Runtime，模型与动态库随程序分发，不再需要 Tesseract）。两个使用上的约束：一是首次识别要把约 28 MB 模型解压到系统临时目录，比后续慢几百毫秒（进页面时会后台预热，把这段等待挪到看图的时候）；二是 RapidOCR 一个 JVM 进程内只允许一种引擎与模型，首次调用后即固定，所以固定用 V4、不提供运行时切换。另外它的字典以中英文为主，日文 / 韩文等只能识别其中的汉字与拉丁部分。
-- Office 转 PDF 全部走**内嵌的 Aspose**：Word 用 `com.aspose:com.aspose.words:22.12-jdk17`（项目早期的本地构件，输出无水印），Excel / PPT 用官方的 `aspose-cells:22.12` 与 `aspose-slides:22.12:jdk16`。后两者未放授权文件时，导出的 PDF 每页带 `Evaluation Only` 水印，而且水印文本会把工作表多撑出一两页空白——把 `Aspose.Cells.Java.lic` / `Aspose.Slides.Java.lic` 放到程序目录或 `lib/` 下即可去除。另外评估版 Aspose.Slides 启动时会调用系统 `reg.exe` 读 `Shell Folders` 定位字体目录，组策略禁用 `reg.exe` 的机器上 PPT 转换会失败（Word / Excel 不受影响）。早期是运行时从 `lib/` 加载 jar + 反射调用，但打进可执行 jar 后类路径已被 shade 重写，反射加载既没必要又容易出错，所以改成编译期依赖 + 直接调用。PDF 拆分合并与图片转 PDF 不依赖外部程序。
+- Office 转 PDF 走**内嵌的 Stirling Office Convert**（MIT，`com.stirling:stirling-office-convert-topdf`）：PDFBox + POI 纯 Java 渲染，无水印、无评估弹窗、无授权文件。它按 Java 25 编译，整个项目的 `maven.compiler.release` 也跟着提到 25，打包脚本会优先找 JDK 25 并喂给 Maven。联动注意：Stirling 0.2.2 要求 PDFBox 3.0.8（它调用了 `TrueTypeFont.setEnableGsub`，3.0.2 上直接 `NoSuchMethodError`），pom 里 PDFBox 版本必须跟随。引擎不支持 WPS 私有格式，`.wps` 已从可转换列表移除。PDF 拆分合并与图片转 PDF 不依赖外部程序。
 - JSON 树视图节点上限 20 万个；超过 3000 个节点时「展开全部」只展开三层。
 - 去除元信息对 JPEG / PNG / WebP / GIF 是无损剪裁，对 BMP / TIFF 退回重编码（画质与体积都可能变化）；HEIC / RAW 等需要专门解码器的格式暂不支持，会明确提示先转成 JPEG 或 PNG。结构异常、剪不动的文件同样走重编码兜底，不会把原图改坏。
 - **拖放全程不碰 `getDragboard()`，只在放下那一刻读一次文件列表**：`hasFiles()` 看着像读个布尔值，实际要穿过 JNI 调 Windows 的 `IDataObject::EnumFormatEtc`——拖拽源程序（资源管理器、浏览器、聊天工具）得把数据对象上挂的每一种格式都准备好才能枚举完，拖图片时还会临时拉起缩略图 / 属性处理器这类 Shell 扩展，一次几百毫秒到几秒不等，且**同步阻塞在界面线程上**。`DRAG_OVER` 每秒几十次、`DRAG_ENTERED` 还会随指针穿过子节点反复触发，只要在其中任何一个里问一句 `hasFiles()`，界面就一卡一卡甚至彻底冻住——表现就是「文件刚进窗口就死了」。所有页面统一走 `UiKit.installFileDrop()`：悬停阶段只 `acceptTransferModes`（不跨进程），内容是不是文件等 `DRAG_DROPPED` 再看，不是文件就 `setDropCompleted(false)`。另外高亮状态用场景坐标判断是否真的离开投放区，避免在子节点之间移动时样式反复重算。每次拖拽结束会在 `~/.daliwan/dnd.log` 追加一行：**界面最大间隔**是相邻两次 `DRAG_OVER` 的最大间隔，直接反映界面线程被堵了多久（正常个位数毫秒），排障时先看它。
@@ -560,9 +560,9 @@ release/daliwan_tool-windows-x64.zip ← 上面这个目录的压缩包，方便
 
 ![应用图标](docs/icon.png)
 
-整个 `dist/daliwan_tool` 目录就是分发单位（**约 160 MB**：应用 jar 112 MB + 自带运行时 52 MB；压缩包 **134 MB**），拷到 U 盘也能直接跑，**目标机器不需要安装 Java**。
+整个 `dist/daliwan_tool` 目录就是分发单位（**约 115 MB**：应用 jar 63 MB + 自带运行时 52 MB；压缩包 **95 MB**），拷到 U 盘也能直接跑，**目标机器不需要安装 Java**。
 
-体积几乎全在依赖里：Aspose 三件套（Word / Excel / PPT 转 PDF）44 MB、OCR 模型与 ONNX 动态库 20 MB、POI + fesod 12 MB、JavaFX 6 MB、PDFBox 4 MB，本程序自身的代码只有 0.4 MB。也就是说这个工具是「把几个格式转换引擎塞进一个 exe」，不是「Java 太胖」——运行时已经被 jlink 裁到 52 MB（完整 JDK 是 300 MB 量级）。
+体积几乎全在依赖里：OCR 模型与 ONNX 动态库 20 MB、POI + fesod 12 MB、Stirling + PDFBox 约 6 MB、JavaFX 6 MB，本程序自身的代码只有 0.4 MB。换掉 Aspose 三件套（44 MB）后整个包小了四成。也就是说这个工具是「把几个格式转换引擎塞进一个 exe」，不是「Java 太胖」——运行时已经被 jlink 裁到 52 MB（完整 JDK 是 300 MB 量级）。
 
 **依赖**：只要一个 JDK 17+（内置 `jpackage` / `jlink`）+ Maven，不需要 GraalVM、VS Build Tools 或 WiX。
 
@@ -587,8 +587,8 @@ python tools\zip_app.py                          :: 4. 压成 release/daliwan_to
 - `--runtime-image` 用 jlink 现做，比 jpackage 默认生成的全量运行时小不少（112 MB → 52 MB）。模块清单不是拍脑袋写的：先用 `jdeps --print-module-deps` 扫出静态依赖，再拿 `OcrSmoke` / `DocSmoke` / `PdfSmoke` / `UiCheck` 挨个在精简运行时里跑通。三个关键取舍：
   - **不写 `java.se`**：那是聚合模块，会把 `java.rmi`、`java.net.http`、`java.instrument`、`java.scripting` 这些用不到的一起拉进来；
   - **`jdk.localedata` 配 `--include-locales=zh,en`**：全量语言包解压后约 30 MB，只留中英文后约 2 MB，中文日期格式仍然正常；
-  - **`java.desktop` 必须留**：Aspose、PDFBox 都吃系统 AWT / 字体，JavaFX 的 Prism 也依赖它。`java.sql` + `java.sql.rowset` 是 Aspose.Cells 的引用，`jdk.charsets` 管 GBK，`jdk.unsupported` 给 `sun.misc.Unsafe`。
-- 体积还可以再压，但要动功能：`rapidocr-onnx-models` 里本来同时带 PP-OCRv3 / v4 两套模型（各约 13 MB），我们固定用 v4，因此在 shade 的 filter 里剔掉了 v3 那两份（省 11 MB）；再往下就得砍 Aspose 的某一路转换、或把 OCR 模型换成轻量版，属于功能取舍，不做默认。
+  - **`java.desktop` 必须留**：Stirling / PDFBox 都吃系统 AWT / 字体，JavaFX 的 Prism 也依赖它。`java.sql` + `java.sql.rowset` 是表格处理库的引用，`jdk.charsets` 管 GBK，`jdk.unsupported` 给 `sun.misc.Unsafe`。
+- 体积还可以再压，但要动功能：`rapidocr-onnx-models` 里本来同时带 PP-OCRv3 / v4 两套模型（各约 13 MB），我们固定用 v4，因此在 shade 的 filter 里剔掉了 v3 那两份（省 11 MB）；再往下就得砍掉某一路文档转换、或把 OCR 模型换成轻量版，属于功能取舍，不做默认。
 - 没有 WiX 时 jpackage 只能出 `app-image`（目录形态），出不了 `.exe` / `.msi` 安装器——目录形态本身就是绿色版，不影响使用；装了 WiX 3 后可把 `--type app-image` 换成 `--type exe` 得到安装器。
 - 脚本支持 `nopause` 参数（结束不暂停，供 CI 调用）。
 

@@ -1,6 +1,6 @@
 package com.daliwan.tool.core.shell;
 
-import com.daliwan.tool.core.doc.AsposeEngine;
+import com.daliwan.tool.core.doc.StirlingEngine;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -35,8 +35,8 @@ public final class ContextMenuIntegration {
     /** 交给程序的命令行开关，与 {@code Launcher} 里的解析保持一致。 */
     public static final String FLAG = "--to-pdf";
 
-    /** 挂菜单的扩展名，跟内置 Aspose 的能力范围保持一致。 */
-    public static final List<String> EXTENSIONS = List.copyOf(AsposeEngine.extensions());
+    /** 挂菜单的扩展名，跟内置引擎的能力范围保持一致。 */
+    public static final List<String> EXTENSIONS = List.copyOf(StirlingEngine.extensions());
 
     private static final String REG_HEADER = "Windows Registry Editor Version 5.00";
 

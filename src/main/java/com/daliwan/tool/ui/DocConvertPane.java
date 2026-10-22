@@ -1,6 +1,6 @@
 package com.daliwan.tool.ui;
 
-import com.daliwan.tool.core.doc.AsposeEngine;
+import com.daliwan.tool.core.doc.StirlingEngine;
 import com.daliwan.tool.core.doc.ConversionEngine;
 import com.daliwan.tool.core.doc.EngineResolver;
 import com.daliwan.tool.util.FileNames;
@@ -30,14 +30,14 @@ import java.util.Set;
 /**
  * Office 转 PDF 页：批量把 Word / Excel / PPT 文档转换为 PDF。
  *
- * <p>转换由内置 Aspose（Words / Cells / Slides）完成，本页只负责收集文件、
+ * <p>转换由内置 Stirling 开源引擎（MIT）完成，本页只负责收集文件、
  * 逐个调用并回显结果。右键菜单把文件递进来时也走同一条路径，
  * 这样用户能看到进度，而不是只有一个「已生成」的提示。
  */
 public class DocConvertPane extends VBox {
 
     /** 可转换的扩展名，与内置引擎保持一致。 */
-    private static final Set<String> SUPPORTED = Set.copyOf(AsposeEngine.extensions());
+    private static final Set<String> SUPPORTED = Set.copyOf(StirlingEngine.extensions());
 
     /** 列表项：文件与其处理状态。 */
     private static final class Item {
@@ -98,8 +98,7 @@ public class DocConvertPane extends VBox {
         getChildren().addAll(buildToolbar(), list, tip, buildFooter());
         configureDragAndDrop();
 
-        // 未授权时 Excel / PPT 的输出带评估水印，这句话必须提前说清楚，
-        // 否则用户转换完才发现，会以为是程序坏了
+        // 引擎能力说明（含兜底状态），转换前就让用户知道当前用的是什么引擎
         String capability = EngineResolver.describeCapability();
         if (capability != null) {
             setStatus(capability, false);
@@ -155,7 +154,7 @@ public class DocConvertPane extends VBox {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("选择要转换的 Office 文档");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Office 文档",
-                AsposeEngine.extensions().stream().map(extension -> "*" + extension).toArray(String[]::new)));
+                StirlingEngine.extensions().stream().map(extension -> "*" + extension).toArray(String[]::new)));
         List<File> files = chooser.showOpenMultipleDialog(
                 getScene() == null ? null : getScene().getWindow());
         if (files != null) {
@@ -211,7 +210,7 @@ public class DocConvertPane extends VBox {
                         list.refresh();
                     });
                     try {
-                        // 每个文件单独挑引擎：Word / Excel / PPT 都走内置 Aspose
+                        // 每个文件单独挑引擎：Word / Excel / PPT 都走内置 Stirling
                         ConversionEngine engine = EngineResolver.resolve(item.file);
                         Path target = naming(item.file);
                         engine.convert(item.file, target);
