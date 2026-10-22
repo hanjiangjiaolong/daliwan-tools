@@ -26,9 +26,12 @@ goto parse_args
 
 REM ---------- 定位 Maven ----------
 set "MVN="
-if exist "D:/soft/apache-maven-3.9.6/bin/mvn.cmd" set "MVN=D:/soft/apache-maven-3.9.6/bin/mvn.cmd"
+REM 先按 PATH / MAVEN_HOME 找，再退到本机已知安装位置——换机器时不用改脚本
+for %%i in (mvn.cmd) do if not "%%~$PATH:i"=="" set "MVN=%%~$PATH:i"
+if not defined MVN if defined MAVEN_HOME if exist "%MAVEN_HOME%\bin\mvn.cmd" set "MVN=%MAVEN_HOME%\bin\mvn.cmd"
+if not defined MVN if defined M2_HOME if exist "%M2_HOME%\bin\mvn.cmd" set "MVN=%M2_HOME%\bin\mvn.cmd"
+if not defined MVN if exist "D:/soft/apache-maven-3.9.6/bin/mvn.cmd" set "MVN=D:/soft/apache-maven-3.9.6/bin/mvn.cmd"
 if not defined MVN if exist "D:/soft/apache-maven-3.9.9/bin/mvn.cmd" set "MVN=D:/soft/apache-maven-3.9.9/bin/mvn.cmd"
-if not defined MVN for %%i in (mvn.cmd) do if not "%%~$PATH:i"=="" set "MVN=%%~$PATH:i"
 if not defined MVN (
     echo [错误] 未找到 Maven，请编辑脚本里的 MVN 变量
     goto fail
@@ -42,9 +45,6 @@ if not defined JDK for /d %%d in ("C:\Program Files\Eclipse Adoptium\jdk-*") do 
 )
 if not defined JDK for /d %%d in ("C:\Program Files\Java\jdk-*") do (
     if exist "%%d\bin\jpackage.exe" set "JDK=%%d"
-)
-if not defined JDK if exist "D:\soft\graalvm-jdk-25_windows-x64_bin\graalvm-jdk-25.0.4+7.1\bin\jpackage.exe" (
-    set "JDK=D:\soft\graalvm-jdk-25_windows-x64_bin\graalvm-jdk-25.0.4+7.1"
 )
 if not defined JDK (
     echo [错误] 未找到带 jpackage 的 JDK（需要 JDK 17 及以上）

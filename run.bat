@@ -3,15 +3,18 @@ setlocal
 
 REM ============================================================
 REM  开发者工具 启动脚本
-REM  按顺序查找 Maven：本机已知路径 -> 系统 PATH
+REM  按顺序查找 Maven：PATH / MAVEN_HOME -> 本机已知路径
 REM ============================================================
 
 set "MVN="
 
-if exist "D:\soft\apache-maven-3.9.6\bin\mvn.cmd" set "MVN=D:\soft\apache-maven-3.9.6\bin\mvn.cmd"
-if exist "D:\soft\apache-maven-3.9.9\bin\mvn.cmd" set "MVN=D:\soft\apache-maven-3.9.9\bin\mvn.cmd"
-if not defined MVN if exist "C:\Program Files\apache-maven-3.9.9\bin\mvn.cmd" set "MVN=C:\Program Files\apache-maven-3.9.9\bin\mvn.cmd"
-if not defined MVN for %%i in (mvn.cmd) do if not "%%~$PATH:i"=="" set "MVN=%%~$PATH:i"
+REM 先按 PATH / MAVEN_HOME 找，再退到本机已知安装位置——换机器时不用改脚本
+for %%i in (mvn.cmd) do if not "%%~$PATH:i"=="" set "MVN=%%~$PATH:i"
+if not defined MVN if defined MAVEN_HOME if exist "%MAVEN_HOME%\bin\mvn.cmd" set "MVN=%MAVEN_HOME%\bin\mvn.cmd"
+if not defined MVN if defined M2_HOME if exist "%M2_HOME%\bin\mvn.cmd" set "MVN=%M2_HOME%\bin\mvn.cmd"
+if not defined MVN if exist "D://soft//apache-maven-3.9.6//bin//mvn.cmd" set "MVN=D://soft//apache-maven-3.9.6//bin//mvn.cmd"
+if not defined MVN if exist "D://soft//apache-maven-3.9.9//bin//mvn.cmd" set "MVN=D://soft//apache-maven-3.9.9//bin//mvn.cmd"
+if not defined MVN if exist "C://Program Files//apache-maven-3.9.9//bin//mvn.cmd" set "MVN=C://Program Files\apache-maven-3.9.9\bin\mvn.cmd"
 
 if not defined MVN (
     echo [错误] 未找到 Maven，请编辑本脚本，把 MVN 变量改为你自己的 mvn.cmd 路径。
