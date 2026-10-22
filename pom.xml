@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.daliwan</groupId>
+    <artifactId>daliwan_tool</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <!--
+        名称须为 ASCII：jpackage / jlink 用它命名安装目录与 cfg，中文在部分 Windows 环境下有编码风险。
+        界面上显示给用户的名字是「大力丸」，由打包脚本给 exe 改名时带上。
+    -->
+    <name>daliwan_tool</name>
+    <description>大力丸：JavaFX 桌面工具箱——哈希摘要、JSON 处理、编码转换、加解密、二维码与文档转换</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+        <javafx.version>21.0.6</javafx.version>
+        <jackson.version>2.17.2</jackson.version>
+        <richtextfx.version>0.11.7</richtextfx.version>
+        <zxing.version>3.5.4</zxing.version>
+        <pdfbox.version>3.0.2</pdfbox.version>
+        <aspose.words.version>22.12-jdk17</aspose.words.version>
+        <aspose.cells.version>22.12</aspose.cells.version>
+        <aspose.slides.version>22.12</aspose.slides.version>
+        <rapidocr.version>0.0.7</rapidocr.version>
+        <sql.formatter.version>2.0.5</sql.formatter.version>
+        <fesod.version>2.0.2-incubating</fesod.version>
+        <slf4j.version>2.0.13</slf4j.version>
+        <junit.version>5.10.2</junit.version>
+        <main.class>com.daliwan.tool.Launcher</main.class>
+    </properties>
+
+    <!--
+        Aspose 的 Java 构件不在 Maven Central，只发布在自家仓库。
+        Aspose.Words 早期是靠手工放进本地仓库的，Cells/Slides 加进来后
+        统一走这个仓库，换机器后 mvn package 才能自动拉全。
+    -->
+    <repositories>
+        <repository>
+            <id>aspose-java</id>
+            <url>https://releases.aspose.com/java/repo/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- JavaFX 控件库；base / graphics 由传递依赖引入 -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- JSON 语法解析：只用到流式 API，不需要 databind -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- 二维码生成与识别 -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+
+        <!--
+            PDF 结构操作（拆分 / 合并 / 图片成页）。直接用 PDFBox，不用二次封装。
+        -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+
+        <!--
+            Word → PDF 的排版引擎，直接内嵌进程序。
+            早期是运行时从 lib 目录加载 jar + 反射调用，但打进可执行 jar 后
+            类路径已被 shade 重写，反射加载既没必要也容易出错，
+            所以改成编译期依赖 + 直接调用。
+
+            注意这份构件不在公共仓库（Aspose 官方坐标是 aspose-words:22.12:jdk17，
+            评估版会给每页打 "Evaluation Only" 水印），它来自项目早期的本地仓库，
+            转换输出没有水印。换构建机时要么把 jar 放进本地 ~/.m2，要么改用官方
+            构件并接受水印/自备授权文件。有授权时把 Aspose.Words.Java.lic
+            放到程序目录或 lib 下即可自动生效。
+        -->
+        <dependency>
+            <groupId>com.aspose</groupId>
+            <artifactId>com.aspose.words</artifactId>
+            <version>${aspose.words.version}</version>
+        </dependency>
+
+        <!--
+            Excel → PDF：Aspose.Cells。纯 Java，不要求装 Office / LibreOffice。
+            构件在 Aspose 自家仓库，体积约 8 MB。
+        -->
+        <dependency>
+            <groupId>com.aspose</groupId>
+            <artifactId>aspose-cells</artifactId>
+            <version>${aspose.cells.version}</version>
+        </dependency>
+
+        <!--
+            PPT → PDF：Aspose.Slides。JDK 16 以后要用 jdk16 分类器的那份，
+            基础 jar 是给老 JDK 编的，直接用在 21 上会踩到内部 API 变更。
+        -->
+        <dependency>
+            <groupId>com.aspose</groupId>
+            <artifactId>aspose-slides</artifactId>
+            <version>${aspose.slides.version}</version>
+            <classifier>jdk16</classifier>
+        </dependency>
+
+        <!--
+            SQL 美化：sql-formatter 的 Java 移植版，纯 Java、无额外依赖，
+            支持 MySQL / PostgreSQL / Oracle / SQL Server 等方言。
+        -->
+        <dependency>
+            <groupId>com.github.vertical-blank</groupId>
+            <artifactId>sql-formatter</artifactId>
+            <version>${sql.formatter.version}</version>
+        </dependency>
+
+        <!-- 富文本代码框：行号栏与语法高亮，JavaFX 原生 TextArea 无法实现 -->
+        <dependency>
+            <groupId>org.fxmisc.richtext</groupId>
+            <artifactId>richtextfx</artifactId>
+            <version>${richtextfx.version}</version>
+        </dependency>
+
+        <!--
+            Excel 写出：Apache Fesod (Incubating)，FastExcel 捐给 Apache 后的名字。
+            用它而不是手写 CSV，是因为 CSV 在中文 Excel 里有编码、逗号、科学计数法一堆坑；
+            fesod-sheet 会自动带上 fesod-common、fesod-shaded（cglib 等零散依赖）与 POI 5.5 全家。
+        -->
+        <dependency>
+            <groupId>org.apache.fesod</groupId>
+            <artifactId>fesod-sheet</artifactId>
+            <version>${fesod.version}</version>
+            <exclusions>
+                <!--
+                    ehcache 只在读大文件时当缓存用，这里只写不读，实测写路径不碰它，
+                    排除后省 1.7 MB。若日后加「读 xlsx」功能需把这条排除去掉。
+                -->
+                <exclusion>
+                    <groupId>org.ehcache</groupId>
+                    <artifactId>ehcache</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 图片元数据（EXIF / IPTC / XMP / GPS）读取，纯 Java 无本地依赖 -->
+        <dependency>
+            <groupId>com.drewnoakes</groupId>
+            <artifactId>metadata-extractor</artifactId>
+            <version>2.19.0</version>
+        </dependency>
+
+        <!--
+            OCR 文字识别：RapidOCR（PaddleOCR 的 Java 移植，PP-OCRv4 + ONNX Runtime）。
+            引擎动态库与模型都打在 jar 里，开箱即用，不再要求用户另行安装 Tesseract；
+            识别中文的能力也远好于 Tesseract 的默认模型。
+            rapidocr 是 API 层，rapidocr-onnx-platform 按构建机系统自动挑对应的
+            平台包（Windows 下即 rapidocr-onnx-windows-x86_64，内含 RapidOcr.dll）
+            ——平台包版本由父 pom 的 dependencyManagement 管理，无需单独指定。
+        -->
+        <dependency>
+            <groupId>io.github.mymonstercat</groupId>
+            <artifactId>rapidocr</artifactId>
+            <version>${rapidocr.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.mymonstercat</groupId>
+            <artifactId>rapidocr-onnx-platform</artifactId>
+            <version>${rapidocr.version}</version>
+        </dependency>
+        <!-- RapidOCR 内部用 slf4j 打日志；不引实现时它自动降级为空实现，界面不受影响 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+
+            <!-- mvn javafx:run 直接启动图形界面，无需手动配置 module-path -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>${main.class}</mainClass>
+                </configuration>
+            </plugin>
+
+            <!-- mvn package 时生成 target/md5-tool-1.0.0.jar，便于归档分发 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main.class}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+    <!--
+        jpackage 打包用：把依赖（含 JavaFX 各平台的原生库）打成一个可执行 jar。
+        打出来的 target/daliwan_tool.jar 可直接 java -jar 运行，也能喂给 jpackage。
+    -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <finalName>daliwan_tool</finalName>
+                            <transformers>
+                                <!-- 主类用 Launcher：非模块化运行时主类不能直接继承 Application -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${main.class}</mainClass>
+                                </transformer>
+                                <!-- 合并各依赖的 META-INF/services，否则 ImageIO / 编解码器会少实现 -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <!-- 依赖里有的 jar 带签名，打进 fat jar 后签名失效会报 SecurityException -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/*.EC</exclude>
+                                        <exclude>module-info.class</exclude>
+                                        <exclude>META-INF/versions/*/module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <!--
+                                      rapidocr-onnx-models 同时带了 PP-OCRv3 与 v4 两套模型（各约 13 MB），
+                                      引擎默认且我们只用 v4（OcrService 的文案与实测加载日志都是 v4），
+                                      v3 的 det/rec 从不加载，白占 11 MB，打包时剔掉。
+                                    -->
+                                    <artifact>io.github.mymonstercat:rapidocr-onnx-models</artifact>
+                                    <excludes>
+                                        <exclude>models/ch_PP-OCRv3_*.onnx</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,76 @@
+/* ============================================================
+   深色主题（默认）
+   只定义语义颜色变量，结构与布局见 app.css
+   ============================================================ */
+
+.root {
+    -c-bg: #17181d;
+    -c-sidebar: #15161b;
+    -c-surface: #1c1d23;
+    -c-surface-2: #222330;
+    -c-surface-3: #282932;
+    -c-hover: #26272f;
+    -c-input-bg: #232430;
+    -c-popup: #23242c;
+
+    -c-border: #33353f;
+    -c-border-strong: #3f424e;
+
+    -c-text: #e7e9ef;
+    -c-text-2: #b3b8c4;
+    -c-text-3: #7b818f;
+    -c-icon: #8d94a3;
+
+    -c-accent: #5b8def;
+    -c-accent-hover: #7aa3f5;
+    -c-accent-soft: #1d2a44;
+    -c-accent-dim: #7f9fd4;
+    -c-accent-line: #2f4573;
+    -c-on-accent: #ffffff;
+
+    -c-success: #4ade80;
+    -c-success-soft: #16321f;
+    -c-danger: #f87171;
+    -c-warning: #fbbf24;
+
+    -c-scroll: #2f313b;
+    -c-scroll-hover: #4a4d59;
+    /* 长文档的滚动条：比普通滚动条更实，ContentArea 那点宽度很容易被忽略 */
+    -c-scroll-strong: #6a7080;
+    -c-scroll-track: #22242c;
+    -c-switch-off: #3a3d47;
+    -c-shadow: rgba(0, 0, 0, 0.55);
+    /* 页内确认层的遮罩：深色下压得更重一点 */
+    -c-scrim: rgba(6, 7, 10, 0.62);
+
+    -c-tooltip-bg: #2c2e37;
+    -c-tooltip-fg: #e7e9ef;
+
+    -c-diff-insert: #4ade80;
+    -c-diff-delete: #f87171;
+    -c-diff-del-bg: #5c262c;
+    -c-diff-del-strong: #8f3a44;
+    -c-diff-ins-bg: #1f4d33;
+    -c-diff-ins-strong: #2c7a4d;
+    -c-diff-filler-bg: #26262d;
+    -c-diff-line-no: #8a8fa0;
+
+    -c-code-key: #7aa3f5;
+    -c-code-string: #96d98b;
+    -c-code-number: #e0a86a;
+    -c-code-literal: #c99bf5;
+    -c-code-punct: #858c9a;
+    -c-code-func: #56b6c2;
+    -c-code-quoted: #e5c07b;
+
+    -c-badge-indigo-bg: #2a2a4d;
+    -c-badge-indigo-fg: #a5b4fc;
+    -c-badge-blue-bg: #1c3252;
+    -c-badge-blue-fg: #93c5fd;
+    -c-badge-green-bg: #16321f;
+    -c-badge-green-fg: #86efac;
+    -c-badge-amber-bg: #3a2e16;
+    -c-badge-amber-fg: #fcd34d;
+    -c-badge-pink-bg: #3a1c2c;
+    -c-badge-pink-fg: #f9a8d4;
+}

@@ -1,0 +1,1631 @@
+/* ============================================================
+   大力丸 - 结构样式
+   本文件只定义形态与布局，颜色一律引用 -c-* 语义变量；
+   变量由 theme-dark.css / theme-light.css 提供，换主题只替换配色。
+   ============================================================ */
+
+.root {
+    -fx-font-family: "Microsoft YaHei UI", "Segoe UI", "PingFang SC", sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: -c-bg;
+    -fx-accent: -c-accent;
+    /* 关闭 Modena 的默认焦点环：它会给聚焦按钮铺一层主色底，
+       导致「刚点过的导航项」看起来仍处于选中态。
+       输入类控件的聚焦反馈由各自的 :focused 边框提供。 */
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.app-root {
+    -fx-background-color: -c-bg;
+}
+
+/* ------------------------------ 顶部标题栏 */
+
+.app-header {
+    -fx-background-color: -c-surface;
+    -fx-border-color: transparent transparent -c-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 18 12 20;
+    -fx-min-height: 62px;
+}
+
+.page-kicker {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+    -fx-letter-spacing: 0.5px;
+}
+
+.page-title {
+    -fx-font-size: 15.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+.page-subtitle {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.header-divider {
+    -fx-background-color: -c-border;
+    -fx-pref-width: 1;
+    -fx-max-height: 22;
+}
+
+/* 顶部栏的图标按钮 */
+.icon-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 7;
+    -fx-padding: 6;
+    -fx-cursor: hand;
+    -fx-content-display: graphic-only;
+}
+
+.icon-button:hover {
+    -fx-background-color: -c-hover;
+}
+
+.icon-button:pressed {
+    -fx-background-color: -c-surface-3;
+}
+
+/* ------------------------------ 侧边栏 */
+
+.sidebar {
+    -fx-background-color: -c-sidebar;
+    -fx-border-color: transparent -c-border transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-pref-width: 202px;
+    -fx-min-width: 202px;
+    -fx-padding: 12 8 10 8;
+}
+
+.brand {
+    -fx-padding: 4 8 14 8;
+}
+
+.brand-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+.brand-subtitle {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.nav-group {
+    -fx-font-size: 10px;
+    -fx-text-fill: -c-text-3;
+    -fx-padding: 10 8 4 10;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 7;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: -c-hover;
+}
+
+.nav-button:selected {
+    -fx-background-color: -c-accent-soft;
+}
+
+.nav-button:focused {
+    -fx-background-insets: 0;
+}
+
+.nav-button:selected:focused {
+    -fx-background-color: -c-accent-soft;
+}
+
+.nav-title {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -c-text-2;
+}
+
+.nav-hint {
+    -fx-font-size: 10px;
+    -fx-text-fill: -c-text-3;
+}
+
+.nav-button:selected .nav-title {
+    -fx-text-fill: -c-accent;
+    -fx-font-weight: bold;
+}
+
+.nav-button:selected .nav-hint {
+    -fx-text-fill: -c-accent-dim;
+}
+
+.nav-button:selected .icon {
+    -fx-stroke: -c-accent;
+}
+
+.nav-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+
+.nav-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* 侧栏底部「更多」：收纳被隐藏的页面，点了在导航末尾展开 */
+.nav-more-bar {
+    -fx-padding: 6 0 2 0;
+}
+
+.nav-more {
+    -fx-background-color: transparent;
+    -fx-background-radius: 7;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text-3;
+}
+
+.nav-more:hover {
+    -fx-background-color: -c-hover;
+    -fx-text-fill: -c-text-2;
+}
+
+.nav-more .icon {
+    -fx-stroke: -c-text-3;
+}
+
+.nav-footer {
+    -fx-font-size: 10px;
+    -fx-text-fill: -c-text-3;
+    -fx-padding: 8 8 2 8;
+}
+
+/* 图标：描边线性风格 */
+.icon {
+    -fx-fill: transparent;
+    -fx-stroke: -c-icon;
+    -fx-stroke-width: 1.25;
+}
+
+/* ------------------------------ 内容区 */
+
+.content-area {
+    -fx-background-color: -c-surface;
+}
+
+/* ------------------------------ 文字与标签 */
+
+.hint {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.section-label {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.field-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text-2;
+}
+
+.status {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.status-error {
+    -fx-text-fill: -c-danger;
+}
+
+/* 着色被暂停时的提示：不是错误，但要用户注意到 */
+.status-warn {
+    -fx-text-fill: -c-warning;
+}
+
+.counter {
+    -fx-font-size: 11px;
+    -fx-text-fill: -c-text-3;
+}
+
+.result-value {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -c-text;
+}
+
+/* ------------------------------ 按钮 */
+
+.primary-button {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -c-on-accent;
+    -fx-background-color: -c-accent;
+    -fx-background-radius: 7;
+    -fx-padding: 6 18 6 18;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: -c-accent-hover;
+}
+
+.primary-button:disabled {
+    -fx-opacity: 0.4;
+}
+
+.ghost-button {
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text-2;
+    -fx-background-color: transparent;
+    -fx-border-color: -c-border-strong;
+    -fx-border-radius: 7;
+    -fx-background-radius: 7;
+    -fx-border-width: 1;
+    -fx-padding: 5 14 5 14;
+    -fx-cursor: hand;
+}
+
+.ghost-button:hover {
+    -fx-background-color: -c-hover;
+    -fx-border-color: -c-accent;
+    -fx-text-fill: -c-text;
+}
+
+.copy-button {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-2;
+    -fx-background-color: -c-surface-3;
+    -fx-background-radius: 6;
+    -fx-padding: 5 11 5 11;
+    -fx-cursor: hand;
+}
+
+.copy-button:hover {
+    -fx-background-color: -c-hover;
+    -fx-text-fill: -c-text;
+}
+
+/* 状态栏里的「导出」：与「复制」同款，只是多了个菜单。
+   早先用 MenuButton，它内置的箭头格子会把按钮撑高一截，强行压回等高又会挤扁文字，
+   因此换成普通按钮 + ContextMenu（见 JsonPane.buildStatusBar）。 */
+.export-button {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-2;
+    -fx-background-color: -c-surface-3;
+    -fx-background-radius: 6;
+    -fx-padding: 5 11 5 11;
+    -fx-cursor: hand;
+}
+
+.export-button:hover {
+    -fx-background-color: -c-hover;
+    -fx-text-fill: -c-text;
+}
+
+.copy-button.copied {
+    -fx-background-color: -c-success-soft;
+    -fx-text-fill: -c-success;
+}
+
+.mode-toggle {
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text-2;
+    -fx-background-color: -c-surface-3;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-color: transparent;
+    -fx-border-width: 1;
+    -fx-padding: 5 13 5 13;
+    -fx-cursor: hand;
+}
+
+.mode-toggle:hover {
+    -fx-text-fill: -c-text;
+}
+
+.mode-toggle:selected {
+    -fx-background-color: -c-accent-soft;
+    -fx-text-fill: -c-accent;
+    -fx-border-color: -c-accent-line;
+    -fx-font-weight: bold;
+}
+
+.hyperlink,
+.install-link {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-accent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-underline: false;
+    -fx-cursor: hand;
+}
+
+.hyperlink:hover,
+.install-link:hover {
+    -fx-underline: true;
+}
+
+/* ------------------------------ 输入控件 */
+
+.text-field {
+    -fx-background-color: -c-input-bg;
+    -fx-background-radius: 7;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 7;
+    -fx-border-width: 1;
+    -fx-text-fill: -c-text;
+    -fx-prompt-text-fill: -c-text-3;
+    -fx-padding: 6 10 6 10;
+}
+
+.text-field:focused {
+    -fx-border-color: -c-accent;
+    -fx-background-color: -c-surface;
+}
+
+.input-area {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Microsoft YaHei UI", monospace;
+    -fx-font-size: 13px;
+    -fx-text-fill: -c-text;
+    -fx-highlight-fill: -c-accent-soft;
+    -fx-highlight-text-fill: -c-text;
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 2;
+}
+
+.input-area .content {
+    -fx-background-color: -c-input-bg;
+    -fx-background-radius: 8;
+}
+
+.input-area:focused {
+    -fx-border-color: -c-accent;
+}
+
+.json-area {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -c-text;
+    -fx-highlight-fill: -c-accent-soft;
+    -fx-highlight-text-fill: -c-text;
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+}
+
+.json-area .content {
+    -fx-background-color: -c-input-bg;
+    -fx-background-radius: 8;
+}
+
+.json-area:focused {
+    -fx-border-color: -c-accent;
+}
+
+.json-output .content {
+    -fx-background-color: -c-surface-2;
+    -fx-background-radius: 8;
+}
+
+.json-input-field {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -c-text;
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 6 10 6 10;
+}
+
+.json-input-field:focused {
+    -fx-border-color: -c-accent;
+}
+
+/* 下拉框 */
+.combo-box,
+.indent-box {
+    -fx-background-color: -c-input-bg;
+    -fx-background-radius: 7;
+    -fx-border-color: -c-border-strong;
+    -fx-border-radius: 7;
+    -fx-border-width: 1;
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.combo-box:hover {
+    -fx-border-color: -c-text-3;
+}
+
+.combo-box:focused {
+    -fx-border-color: -c-accent;
+}
+
+.combo-box > .list-cell {
+    -fx-text-fill: -c-text;
+    -fx-padding: 5 8 5 10;
+    -fx-background-color: transparent;
+}
+
+.combo-box .arrow,
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.combo-box .arrow {
+    -fx-background-color: -c-text-2;
+}
+
+.combo-box-popup > .list-view {
+    -fx-background-color: -c-popup;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 4;
+    -fx-effect: dropshadow(gaussian, -c-shadow, 14, 0, 0, 4);
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -c-text-2;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 5;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover {
+    -fx-background-color: -c-hover;
+    -fx-text-fill: -c-text;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected {
+    -fx-background-color: -c-accent-soft;
+    -fx-text-fill: -c-accent;
+}
+
+/* 勾选框 */
+.check-box {
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text-2;
+}
+
+.check-box > .box {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border-strong;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-border-width: 1;
+}
+
+.check-box:selected > .box {
+    -fx-background-color: -c-accent;
+    -fx-border-color: -c-accent;
+}
+
+.check-box:selected > .box > .mark {
+    -fx-background-color: -c-on-accent;
+}
+
+.option-check {
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text-2;
+}
+
+/* ------------------------------ 滚动条
+   选择器必须带 :vertical / :horizontal，否则优先级低于 Modena 默认的
+   .scroll-bar:vertical .thumb，自定义配色会被覆盖成系统灰。 */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: 9;
+    -fx-pref-height: 0;
+}
+
+.scroll-bar:horizontal {
+    -fx-pref-height: 9;
+    -fx-pref-width: 0;
+}
+
+.scroll-bar:vertical > .track,
+.scroll-bar:vertical > .track-background,
+.scroll-bar:horizontal > .track,
+.scroll-bar:horizontal > .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+}
+
+.scroll-bar:vertical > .thumb {
+    -fx-background-color: -c-scroll;
+    -fx-background-radius: 4;
+    -fx-background-insets: 2 2 2 2;
+}
+
+.scroll-bar:horizontal > .thumb {
+    -fx-background-color: -c-scroll;
+    -fx-background-radius: 4;
+    -fx-background-insets: 2 2 2 2;
+}
+
+.scroll-bar:vertical > .thumb:hover,
+.scroll-bar:horizontal > .thumb:hover {
+    -fx-background-color: -c-scroll-hover;
+}
+
+.scroll-bar > .increment-button,
+.scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+    -fx-background-color: transparent;
+}
+
+.scroll-bar > .increment-button > .increment-arrow,
+.scroll-bar > .decrement-button > .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}
+
+.scroll-pane > .corner {
+    -fx-background-color: transparent;
+}
+
+/* 代码区与表格的滚动条：内容动辄几万行，thumb 会被压得很短，
+   全局那套 9px + 淡色在长文档里几乎看不见，这里单独做实一点：
+   加宽、给一条轨道底色、thumb 用更深的颜色。 */
+.code-container .scroll-bar:vertical,
+.json-table .scroll-bar:vertical {
+    -fx-pref-width: 13;
+}
+
+.code-container .scroll-bar:vertical > .track,
+.code-container .scroll-bar:vertical > .track-background,
+.json-table .scroll-bar:vertical > .track,
+.json-table .scroll-bar:vertical > .track-background {
+    -fx-background-color: -c-scroll-track;
+    -fx-background-radius: 6;
+    -fx-background-insets: 2 3 2 3;
+}
+
+.code-container .scroll-bar:vertical > .thumb,
+.json-table .scroll-bar:vertical > .thumb {
+    -fx-background-color: -c-scroll-strong;
+    -fx-background-radius: 6;
+    -fx-background-insets: 3 4 3 4;
+    /* 说明见 ui/ScrollBars：滑块长度由宿主演算，CSS 的最小高度不会被采纳 */
+}
+
+.code-container .scroll-bar:vertical > .thumb:hover,
+.json-table .scroll-bar:vertical > .thumb:hover {
+    -fx-background-color: -c-scroll-hover;
+}
+
+/* ------------------------------ 弹出菜单 / 菜单按钮 */
+
+.menu-button {
+    -fx-background-color: -c-surface-2;
+    -fx-border-color: -c-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 5 8 5 12;
+    -fx-cursor: hand;
+}
+
+.menu-button:hover {
+    -fx-background-color: -c-hover;
+    -fx-border-color: -c-border-strong;
+}
+
+.menu-button > .label {
+    -fx-text-fill: -c-text-2;
+    -fx-font-size: 12.5px;
+}
+
+.menu-button:hover > .label {
+    -fx-text-fill: -c-text;
+}
+
+.menu-button > .arrow-button {
+    -fx-padding: 0 0 0 6;
+}
+
+.menu-button > .arrow-button > .arrow {
+    -fx-background-color: -c-text-3;
+    -fx-padding: 3 4 3 4;
+}
+
+.context-menu {
+    -fx-background-color: -c-popup;
+    -fx-background-radius: 8;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 4;
+    -fx-effect: dropshadow(gaussian, -c-shadow, 16, 0.12, 0, 4);
+}
+
+.menu-item {
+    -fx-background-radius: 5;
+    -fx-padding: 5 12 5 12;
+}
+
+.menu-item > .label {
+    -fx-text-fill: -c-text-2;
+    -fx-font-size: 12.5px;
+}
+
+.menu-item:focused {
+    -fx-background-color: -c-hover;
+}
+
+.menu-item:focused > .label {
+    -fx-text-fill: -c-text;
+}
+
+.menu-item:disabled > .label {
+    -fx-text-fill: -c-text-3;
+}
+
+/* ------------------------------ 结果区 */
+
+.result-panel {
+    -fx-background-color: -c-surface-2;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 14 12 14;
+}
+
+.digest-field {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text;
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 5 10 5 10;
+}
+
+.digest-field:focused {
+    -fx-border-color: -c-accent;
+}
+
+/* ------------------------------ 文件拖拽区 */
+
+.drop-zone {
+    -fx-background-color: -c-surface-2;
+    -fx-border-color: -c-border-strong;
+    -fx-border-style: segments(7, 6) line-cap round;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-border-width: 1.3;
+}
+
+.drop-zone-active {
+    -fx-background-color: -c-accent-soft;
+    -fx-border-color: -c-accent;
+}
+
+.drop-badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-accent;
+    -fx-background-color: -c-accent-soft;
+    -fx-background-radius: 20;
+    -fx-padding: 3 11 3 11;
+}
+
+.drop-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+.drop-subtitle {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+/* ------------------------------ 进度条 */
+
+.progress-bar {
+    -fx-pref-height: 5px;
+}
+
+.progress-bar > .bar {
+    -fx-background-color: -c-accent;
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+    -fx-padding: 2.5;
+}
+
+.progress-bar > .track {
+    -fx-background-color: -c-surface-3;
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+.progress-indicator {
+    -fx-progress-color: -c-accent;
+}
+
+/* ------------------------------ 卡片 */
+
+.card {
+    -fx-background-color: -c-surface-2;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 16 14 16;
+}
+
+.card-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+.metric-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: -c-text-3;
+}
+
+.metric-value {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 21px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-accent;
+}
+
+/* ------------------------------ JSON 树 */
+
+.json-tree {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 4;
+}
+
+.json-tree .tree-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -c-text-2;
+    -fx-padding: 2 4 2 4;
+}
+
+.json-tree .tree-cell:filled:hover {
+    -fx-background-color: -c-hover;
+}
+
+.json-tree .tree-cell:filled:selected {
+    -fx-background-color: -c-accent-soft;
+    -fx-text-fill: -c-text;
+}
+
+.json-tree .tree-cell > .tree-disclosure-node > .arrow {
+    -fx-background-color: -c-text-3;
+}
+
+.tree-key {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text;
+}
+
+.tree-preview {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.type-badge {
+    -fx-font-size: 9px;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 3;
+}
+
+.type-object {
+    -fx-background-color: -c-badge-indigo-bg;
+    -fx-text-fill: -c-badge-indigo-fg;
+}
+
+.type-array {
+    -fx-background-color: -c-badge-blue-bg;
+    -fx-text-fill: -c-badge-blue-fg;
+}
+
+.type-string {
+    -fx-background-color: -c-badge-green-bg;
+    -fx-text-fill: -c-badge-green-fg;
+}
+
+.type-number {
+    -fx-background-color: -c-badge-amber-bg;
+    -fx-text-fill: -c-badge-amber-fg;
+}
+
+.type-boolean {
+    -fx-background-color: -c-badge-pink-bg;
+    -fx-text-fill: -c-badge-pink-fg;
+}
+
+.type-null {
+    -fx-background-color: -c-surface-3;
+    -fx-text-fill: -c-text-3;
+}
+
+/* ------------------------------ JSON 表格 */
+
+.json-table {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 4;
+}
+
+.json-table .column-header-background {
+    -fx-background-color: -c-surface-2;
+    -fx-background-radius: 6 6 0 0;
+}
+
+.json-table .column-header,
+.json-table .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent -c-border transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-size: 30px;
+}
+
+.json-table .column-header .label {
+    -fx-text-fill: -c-text-2;
+    -fx-font-size: 11.5px;
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 0 8;
+}
+
+/* 默认皮肤的行分隔线在深色主题下几乎看不见，这里统一用主题边框色 */
+.json-table .table-row-cell {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: transparent transparent -c-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-table-cell-border-color: transparent;
+}
+
+.json-table .table-row-cell:odd {
+    -fx-background-color: -c-surface-2;
+}
+
+.json-table .table-row-cell:filled:hover {
+    -fx-background-color: -c-hover;
+}
+
+.json-table .table-row-cell:filled:selected {
+    -fx-background-color: -c-accent-soft;
+}
+
+.json-table .table-cell {
+    -fx-text-fill: -c-text-2;
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 11.5px;
+    -fx-padding: 0 8 0 8;
+    -fx-alignment: center-left;
+}
+
+.json-table .table-row-cell:filled:selected .table-cell {
+    -fx-text-fill: -c-text;
+}
+
+/* 行号列弱化一点，别和内容抢注意力 */
+.json-table .table-row-cell .table-cell:first-child {
+    -fx-text-fill: -c-text-3;
+}
+
+/* ------------------------------ 图像画布 */
+
+/* 二维码必须是白底才能被扫描，但空态下整块白在深色主题里很刺眼，
+   因此外层用中性面、由图片自身携带白底。 */
+.qr-preview {
+    -fx-background-color: -c-surface-2;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 18;
+}
+
+/* 图片预览：虚线画布，提示这里可以放图 */
+.image-preview {
+    -fx-background-color: -c-surface-2;
+    -fx-border-color: -c-border-strong;
+    -fx-border-style: segments(7, 6) line-cap round;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1.3;
+    -fx-padding: 14;
+}
+
+/* 取色器：默认皮肤在深色主题下按钮与文字都不可辨，需整体改色 */
+.color-picker {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border-strong;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.color-picker:hover {
+    -fx-border-color: -c-text-3;
+}
+
+.color-picker > .label {
+    -fx-text-fill: -c-text;
+    -fx-padding: 4 6 4 6;
+}
+
+.color-picker > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 6 0 0;
+}
+
+.color-picker > .arrow-button > .arrow {
+    -fx-background-color: -c-text-3;
+}
+
+.color-palette {
+    -fx-background-color: -c-popup;
+    -fx-border-color: -c-border;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, -c-shadow, 14, 0, 0, 4);
+}
+
+.color-palette .label {
+    -fx-text-fill: -c-text-2;
+}
+
+.color-picker-small {
+    -fx-font-size: 11px;
+    -fx-pref-width: 96px;
+}
+
+/* ------------------------------ 设置页 */
+
+.settings-page {
+    -fx-background-color: -c-bg;
+}
+
+.settings-group {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.settings-footer {
+    -fx-padding: 12 24 14 24;
+    -fx-background-color: -c-surface;
+    -fx-border-color: -c-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.settings-title {
+    -fx-font-size: 15.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+.settings-subtitle {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.settings-card {
+    -fx-background-color: -c-surface;
+    -fx-background-radius: 10;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+.settings-row {
+    -fx-padding: 10 16 10 14;
+}
+
+.settings-row:hover {
+    -fx-background-color: -c-hover;
+}
+
+.settings-row-separated {
+    -fx-border-color: -c-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.settings-row-title {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -c-text;
+}
+
+.settings-row-hint {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.settings-path {
+    -fx-font-size: 10px;
+    -fx-text-fill: -c-text-3;
+    -fx-padding: 0 0 0 2;
+}
+
+/* ------------------------------ 关于弹窗 */
+
+.about-app-name {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+.about-version {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+    -fx-padding: 0 0 2 0;
+}
+
+.about-kv-key {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.about-kv-value {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text;
+}
+
+/* 长文本（配置文件路径、说明段）走 TextFlow，颜色必须显式给 Text 指定 */
+.about-text {
+    -fx-font-size: 11.5px;
+    -fx-fill: -c-text;
+}
+
+.about-flow {
+    -fx-padding: 1 0 0 0;
+}
+
+.about-credit-name {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text;
+}
+
+.about-credit-use {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+.about-credit-license {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+    -fx-opacity: 0.85;
+}
+
+/* ------------------------------ 页内确认层（设置页「还原默认值」） */
+
+.confirm-scrim {
+    -fx-background-color: -c-scrim;
+}
+
+.confirm-card {
+    -fx-background-color: -c-surface;
+    -fx-background-radius: 12;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, -c-shadow, 26, 0.06, 0, 10);
+}
+
+.confirm-title {
+    -fx-font-size: 13.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+.confirm-text {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-text-2;
+    -fx-line-spacing: 2px;
+}
+
+/* 开关 */
+.switch-track {
+    -fx-background-radius: 11;
+}
+
+.switch-track-off {
+    -fx-background-color: -c-switch-off;
+}
+
+.switch-track-on {
+    -fx-background-color: -c-accent;
+}
+
+.switch-thumb {
+    -fx-background-radius: 8;
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.28), 3, 0, 0, 1);
+}
+
+/* ------------------------------ 文本差异（左右分屏） */
+
+.diff-view {
+    -fx-background-color: -c-surface;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.diff-scroller {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+
+.diff-column {
+    -fx-background-color: transparent;
+}
+
+.diff-divider {
+    -fx-background-color: -c-border;
+}
+
+.diff-row {
+    -fx-padding: 1 0;
+}
+
+.diff-row-equal {
+    -fx-background-color: transparent;
+}
+
+.diff-row-del {
+    -fx-background-color: -c-diff-del-bg;
+}
+
+.diff-row-ins {
+    -fx-background-color: -c-diff-ins-bg;
+}
+
+.diff-row-filler {
+    -fx-background-color: -c-diff-filler-bg;
+}
+
+.diff-line-no {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -c-diff-line-no;
+    -fx-alignment: center-right;
+    -fx-padding: 2 8 2 6;
+}
+
+.diff-marker {
+    -fx-font-family: "Cascadia Mono", "Consolas", monospace;
+    -fx-font-size: 12.5px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 2 2 2;
+}
+
+.diff-row-del > .diff-marker {
+    -fx-text-fill: -c-diff-delete;
+}
+
+.diff-row-ins > .diff-marker {
+    -fx-text-fill: -c-diff-insert;
+}
+
+.diff-text {
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12.5px;
+}
+
+.diff-seg-plain {
+    -fx-text-fill: -c-text;
+}
+
+.diff-seg-del {
+    -fx-text-fill: -c-text;
+    -fx-background-color: -c-diff-del-strong;
+    -fx-background-radius: 3;
+}
+
+.diff-seg-ins {
+    -fx-text-fill: -c-text;
+    -fx-background-color: -c-diff-ins-strong;
+    -fx-background-radius: 3;
+}
+
+/* ------------------------------ 图片元数据 */
+
+.img-preview-box {
+    -fx-background-color: -c-input-bg;
+    -fx-background-radius: 8;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+}
+
+.img-preview-placeholder {
+    -fx-text-fill: -c-text-3;
+}
+
+.meta-section {
+    -fx-padding: 4 0 8 0;
+}
+
+.meta-row {
+    -fx-padding: 2 0;
+}
+
+.meta-tag {
+    -fx-text-fill: -c-text-3;
+    -fx-font-size: 12px;
+    -fx-min-width: 132;
+}
+
+.meta-value {
+    -fx-text-fill: -c-text;
+    -fx-font-size: 12.5px;
+}
+
+/* ------------------------------ 去除元信息对话框 */
+
+.dialog-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text;
+}
+
+/* 单选框只替换圆点，其余形态交给 Modena：选中色取 .root 里的 -fx-accent */
+.radio-button {
+    -fx-font-size: 12px;
+    -fx-text-fill: -c-text-2;
+}
+
+.radio-button > .radio {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border-strong;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 3;
+}
+
+.radio-button:selected > .radio {
+    -fx-background-color: -c-accent;
+    -fx-border-color: -c-accent;
+}
+
+.radio-button:selected > .radio > .dot {
+    -fx-background-color: -c-on-accent;
+    -fx-background-insets: 0;
+    -fx-padding: 3;
+}
+
+/* 对话框里的说明文字：TextFlow 里的 Text 用 -fx-fill 而不是 -fx-text-fill */
+.hint-text {
+    -fx-fill: -c-text-3;
+    -fx-font-size: 11.5px;
+}
+
+.strip-result {
+    -fx-font-size: 11.5px;
+    -fx-padding: 4 0 6 0;
+}.strip-ok {
+    -fx-text-fill: -c-text-2;
+}
+
+.strip-fail {
+    -fx-text-fill: -c-danger;
+}
+
+/* ------------------------------ 参数提示 */
+
+.param-hint {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+    -fx-padding: 0 0 0 2;
+}
+
+.param-hint-ok {
+    -fx-text-fill: -c-success;
+}
+
+.param-hint-bad {
+    -fx-text-fill: -c-danger;
+}
+
+/* ------------------------------ 通用容器 */
+
+.json-pane {
+    -fx-background-color: -c-surface;
+}
+
+.json-split {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.json-split > .split-pane-divider {
+    -fx-background-color: -c-border;
+    -fx-background-insets: 0;
+    -fx-padding: 0 1 0 1;
+}
+
+.json-split > .split-pane-divider:hover {
+    -fx-background-color: -c-accent;
+}
+
+/* 上下分栏时分割线变成一条水平细线，左右的内边距要换成上下的 */
+.json-split.split-vertical > .split-pane-divider {
+    -fx-padding: 1 0 1 0;
+}
+
+.plain-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+
+.plain-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.separator > .line {
+    -fx-border-color: -c-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ------------------------------ 代码框：行号 + 语法高亮 */
+
+.code-container {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 2;
+}
+
+.json-code-area,
+.json-code-area-readonly {
+    -fx-background-color: transparent;
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12.5px;
+}
+
+.json-code-area .text,
+.json-code-area-readonly .text {
+    -fx-fill: -c-text;
+}
+
+.json-code-area .caret {
+    -fx-stroke: -c-accent;
+}
+
+.json-code-area .selection {
+    -fx-fill: -c-accent-soft;
+}
+
+.code-container .virtual-flow,
+.code-container .clipped-container,
+.code-container .sheet {
+    -fx-background-color: transparent;
+}
+
+/* 行号栏 */
+.lineno {
+    -fx-background-color: -c-surface-3;
+    -fx-text-fill: -c-text-3;
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-padding: 0 9 0 8;
+    -fx-border-color: transparent -c-border transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* 语法着色：RichTextFX 用 Text 节点渲染，故使用 -fx-fill。
+   选择器需带上容器类，否则会被上方的 .text 基础色规则覆盖。 */
+.json-code-area .json-key,
+.json-code-area-readonly .json-key {
+    -fx-fill: -c-code-key;
+}
+
+.json-code-area .json-string,
+.json-code-area-readonly .json-string {
+    -fx-fill: -c-code-string;
+}
+
+.json-code-area .json-number,
+.json-code-area-readonly .json-number {
+    -fx-fill: -c-code-number;
+}
+
+.json-code-area .json-literal,
+.json-code-area-readonly .json-literal {
+    -fx-fill: -c-code-literal;
+}
+
+.json-code-area .json-punct,
+.json-code-area-readonly .json-punct {
+    -fx-fill: -c-code-punct;
+}
+
+/* ---------------------------------------------------------------- SQL 结果框 */
+
+.sql-code-area {
+    -fx-background-color: transparent;
+    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 12.5px;
+}
+
+.sql-code-area .text {
+    -fx-fill: -c-text;
+}
+
+.sql-code-area .selection {
+    -fx-fill: -c-accent-soft;
+}
+
+/* 着色规则必须排在 .text 之后：两者特异性相同，靠先后顺序决定胜负 */
+.sql-code-area .sql-kw {
+    -fx-fill: -c-code-key;
+}
+
+.sql-code-area .sql-func {
+    -fx-fill: -c-code-func;
+}
+
+.sql-code-area .sql-string {
+    -fx-fill: -c-code-string;
+}
+
+.sql-code-area .sql-number {
+    -fx-fill: -c-code-number;
+}
+
+.sql-code-area .sql-literal {
+    -fx-fill: -c-code-literal;
+}
+
+.sql-code-area .sql-comment {
+    -fx-fill: -c-code-punct;
+    -fx-font-style: italic;
+}
+
+.sql-code-area .sql-quoted {
+    -fx-fill: -c-code-quoted;
+}
+
+.sql-code-area .sql-param {
+    -fx-fill: -c-code-number;
+}
+
+.sql-code-area .sql-op {
+    -fx-fill: -c-code-punct;
+}
+
+.code-placeholder {
+    -fx-text-fill: -c-text-3;
+    -fx-padding: 4 0 0 2;
+}
+
+.footer {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -c-text-3;
+}
+
+/* ------------------------------ 页签 */
+
+.tab-pane > .tab-header-area {
+    -fx-padding: 0 0 10 0;
+}
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 7;
+    -fx-border-color: transparent;
+    -fx-border-radius: 7;
+    -fx-padding: 5 16 5 16;
+    -fx-cursor: hand;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:hover {
+    -fx-background-color: -c-hover;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -c-accent-soft;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
+    -fx-text-fill: -c-text-2;
+    -fx-font-size: 12.5px;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected > .tab-container > .tab-label {
+    -fx-text-fill: -c-accent;
+    -fx-font-weight: bold;
+}
+
+/* 去掉选中页签的下方高亮条与焦点框 */
+.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .focus-indicator {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+.tab-pane > .tab-content-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ------------------------------ 杂项控件 */
+
+.tooltip {
+    -fx-background-color: -c-tooltip-bg;
+    -fx-text-fill: -c-tooltip-fg;
+    -fx-background-radius: 6;
+    -fx-font-size: 11.5px;
+    -fx-padding: 5 9 5 9;
+}
+
+.list-view {
+    -fx-background-color: -c-input-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+}
+
+.list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -c-text-2;
+    -fx-padding: 7 10 7 10;
+}
+
+.list-view .list-cell:filled:hover {
+    -fx-background-color: -c-hover;
+}
+
+.list-view .list-cell:filled:selected {
+    -fx-background-color: -c-accent-soft;
+    -fx-text-fill: -c-text;
+}
+
+.alert-dialog {
+    -fx-background-color: -c-surface;
+}
