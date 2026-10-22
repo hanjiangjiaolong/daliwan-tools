@@ -13,9 +13,7 @@ import java.util.List;
 /**
  * PDF 拆分：把一份 PDF 按页拆成多个文件，或按指定页码范围提取。
  *
- * <p>直接使用 PDFBox 自带的 {@link Splitter}。早期用的是 x-easypdf 封装，
- * 它启动时会加载系统字体、还会往标准输出打印横幅；换回 PDFBox 后
- * 既没有字体依赖，也不再需要接管 stdout。
+ * <p>直接使用 PDFBox 自带的 {@link Splitter}：没有系统字体依赖，也不会往标准输出打印横幅。
  */
 public final class PdfSplitter {
 

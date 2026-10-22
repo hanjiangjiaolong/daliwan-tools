@@ -281,9 +281,8 @@ public class SettingsPane extends StackPane {
     /**
      * 页内确认层。
      *
-     * <p>原来用的是系统 {@code Alert}：默认灰底、系统字体、两枚无语义的按钮，
-     * 和这套自绘界面放在一起很跳。改成盖在设置页上的一层遮罩 + 卡片，
-     * 配色与按钮直接复用页面样式，也不额外多一个窗口。
+     * <p>盖在设置页上的一层遮罩 + 卡片：配色与按钮直接复用页面样式，
+     * 也不额外多一个窗口（系统 {@code Alert} 是灰底系统字体，和自绘界面放一起很跳）。
      */
     private void showResetConfirm() {
         Label title = new Label("还原默认值");

@@ -25,7 +25,7 @@ mvn javafx:run                  # 开发模式
 java -jar target/daliwan_tool.jar
 ```
 
-需要 JDK 25 与 Maven 3.9+。当前 JDK 21 也能启动，但 Office 转换引擎按 Java 25 编译，会不可用。
+需要 JDK 25 与 Maven 3.9+（Office 转换引擎按 Java 25 编译）。
 
 **打包**：`build-jpackage.bat`（加 `nopause` 参数可无人值守），产物在 `dist/daliwan_tool/` 与 `release/`。
 
@@ -72,34 +72,7 @@ java -jar target/daliwan_tool.jar
 
 结果都写在源文件所在目录，同名自动加序号，绝不覆盖。程序目录搬家后启动时会按当前路径重写注册表。
 
-> 菜单项是「动词」驱动的：一个动作 = 一个注册表子键 + 一条命令行 + 一组扩展名。
-> 加新格式只需在 `core/shell/ContextMenuIntegration` 里加一项，安装脚本、卸载脚本与 `.reg` 兜底自动跟上。
-> **单个动作平铺、多个动作才收成子菜单**——所以 Office 上是平铺一项，PDF 上才是二级菜单。
-
----
-
-## Windows 更新开关
-
-![更新开关](docs/screenshot-update.png)
-
-阻止或恢复 Windows 10 / 11 的自动更新，**随时可开启和关闭**。
-
-点按钮会弹 UAC——改更新服务、写更新策略都需要管理员权限，程序不会偷偷提权，你在 UAC 里点「否」就什么都不会改。
-
-实际上同时动了三处，缺一不可：
-
-| 层面 | 阻止时 | 说明 |
-| --- | --- | --- |
-| 服务 | `wuauserv`、`UsoSvc` 设为禁用 | 更新主服务与编排服务 |
-| 服务 | `DoSvc`、`BITS` 降为手动 | 这两个还承担应用商店等正常下载，**只降级不禁用** |
-| 策略 | `WindowsUpdate\AU!NoAutoUpdate = 1` | 让设置里显示为已关闭 |
-| 计划任务 | 更新编排、升级助手、`WaaSMedic` 停用 | `WaaSMedic` 是微软的自我修复任务，漏掉它几天后会被改回去 |
-
-> **风险自负**：阻止之后 Windows 不再下载安装任何更新，**包括安全补丁**。
-> 只改上面三处，不删文件、不影响已安装的更新，点「恢复自动更新」即可还原。
-> Windows 大版本升级可能把这些设置重置，界面会显示「只关了一半」，再点一次即可。
-
-命令行也能用：`大力丸.exe --update-block on|off|status`（`status` 只读，不需要管理员）。
+> 单个动作平铺、多个动作才收成子菜单——所以 Office 上是平铺一项，PDF 上才是二级菜单。
 
 ---
 
@@ -107,8 +80,9 @@ java -jar target/daliwan_tool.jar
 
 - **主题**：默认跟随系统深浅色，标题栏可一键切成固定深色或浅色
 - **导航**：设置页可隐藏不用的页面，隐藏项收在侧栏底部「更多（N）」
+- **Windows 更新**：阻止 / 恢复系统自动更新，按钮会弹 UAC；命令行等价写法 `--update-block on|off|status`
 - **还原默认值**：设置页一键把所有开关拨回初始状态
-- **配置位置**：`~/.daliwan/settings.properties`（旧 `.dev-toolbox` 会自动迁移）
+- **配置位置**：`~/.daliwan/settings.properties`
 - **关于**：标题栏右上角的 ⓘ，显示版本、运行时、协议与第三方组件
 
 ---
@@ -122,7 +96,7 @@ mvn test        # 358 个单元测试，core 层不引用 JavaFX，可脱离界�
 | 文档 | 内容 |
 | --- | --- |
 | [docs/FEATURES.md](docs/FEATURES.md) | 功能逐项清单、技术选型、已知限制、后续建议 |
-| [docs/DESIGN.md](docs/DESIGN.md) | 目录结构、实现要点、已知限制的细节、打包走过的弯路 |
+| [docs/DESIGN.md](docs/DESIGN.md) | 目录结构、实现要点与已知限制的细节 |
 
 ---
 

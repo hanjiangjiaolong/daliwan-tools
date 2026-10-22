@@ -177,7 +177,7 @@ public final class JsonTable {
         List<Scored> found = new ArrayList<>();
         collect(document.root(), "", List.of(), 0, found);
         if (found.isEmpty()) {
-            // 顶层既不是对象也不是数组：交给 build 抛与以前一致的错误
+            // 顶层既不是对象也不是数组：交给 build 抛出同一个错误
             return new AutoResult(build(json, maxRows, maxColumns), List.of(), -1, document);
         }
         found.sort(PRIORITY);

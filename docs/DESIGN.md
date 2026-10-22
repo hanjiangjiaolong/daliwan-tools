@@ -1,6 +1,6 @@
 # 设计与实现说明
 
-> 这份文档放的是「为什么这么写」：目录结构、实现要点、已知限制、走过的弯路。
+> 这份文档放的是「为什么这么写」：目录结构、实现要点、已知限制。
 > 日常上手看 [README](../README.md)，功能清单看 [FEATURES](FEATURES.md)。
 
 ---
@@ -217,7 +217,7 @@ CSV 是文本格式，中文 Excel 打开会连踩三个坑：无 BOM 乱码（�
 - Base64 与 URL 页面面向文本，不含二进制文件编解码。
 - 对称加密的明文按 UTF-8 处理，解密非文本（二进制）数据时结果会显示为乱码。
 - RSA 使用 PKCS#1 v1.5 填充，未实现 OAEP；新系统建议自行改用 OAEP 以获得更好的安全性。
-- OCR 用**内置的 RapidOCR**（PP-OCRv4 + ONNX Runtime，模型与动态库随程序分发，不再需要 Tesseract）。两个使用上的约束：一是首次识别要把约 28 MB 模型解压到系统临时目录，比后续慢几百毫秒（进页面时会后台预热，把这段等待挪到看图的时候）；二是 RapidOCR 一个 JVM 进程内只允许一种引擎与模型，首次调用后即固定，所以固定用 V4、不提供运行时切换。另外它的字典以中英文为主，日文 / 韩文等只能识别其中的汉字与拉丁部分。
+- OCR 用**内置的 RapidOCR**（PP-OCRv4 + ONNX Runtime，模型与动态库随程序分发，用户不需要另装任何东西）。两个使用上的约束：一是首次识别要把约 28 MB 模型解压到系统临时目录，比后续慢几百毫秒（进页面时会后台预热，把这段等待挪到看图的时候）；二是 RapidOCR 一个 JVM 进程内只允许一种引擎与模型，首次调用后即固定，所以固定用 V4、不提供运行时切换。另外它的字典以中英文为主，日文 / 韩文等只能识别其中的汉字与拉丁部分。
 - Office ⇄ PDF 走**内嵌的 Stirling Office Convert**（MIT）：`stirling-office-convert-topdf` 管 Office → PDF，同项目的 `stirling-office-convert`（core）管 PDF → Office（DOCX / XLSX / PPTX / TXT），两者共用 PDFBox + POI，无水印、无评估弹窗、无授权文件。它按 Java 25 编译，整个项目的 `maven.compiler.release` 也跟着提到 25，打包脚本会优先找 JDK 25 并喂给 Maven。联动注意：Stirling 0.2.2 要求 PDFBox 3.0.8（它调用了 `TrueTypeFont.setEnableGsub`，3.0.2 上直接 `NoSuchMethodError`），pom 里 PDFBox 版本必须跟随。引擎不支持 WPS 私有格式，`.wps` 已从可转换列表移除。PDF 拆分合并与图片转 PDF 不依赖外部程序。
 - JSON 树视图节点上限 20 万个；超过 3000 个节点时「展开全部」只展开三层。
 - 去除元信息对 JPEG / PNG / WebP / GIF 是无损剪裁，对 BMP / TIFF 退回重编码（画质与体积都可能变化）；HEIC / RAW 等需要专门解码器的格式暂不支持，会明确提示先转成 JPEG 或 PNG。结构异常、剪不动的文件同样走重编码兜底，不会把原图改坏。
@@ -240,10 +240,6 @@ CSV 是文本格式，中文 Excel 打开会连踩三个坑：无 BOM 乱码（�
 
 ---
 
-### 曾经走过的路：GluonFX / native-image
+### 打包产物怎么验证
 
-早期是用 GluonFX + GraalVM 打单文件原生 exe 的，现已整条链路移除（`build-exe.bat`、pom 里的 `gluonfx-maven-plugin`、`META-INF/native-image` 元数据与 JNI 补丁脚本都已删掉）。原因：AOT 下每加一个依赖都要补反射 / JNI / 资源配置，踩坑成本远高于收益——`java.awt` 的字段是 JNI 访问的（缺配置就 `NoSuchFieldError: ColorModel.nBits`）、文档转换库的 `WindowsNativeCall_x64.dll` 会 JNI 回调 `HashMap.<init>(I)V` 与 `Byte.<init>(B)V`、PDFBox 的 cmap / afm 资源要逐个写进 `IncludeResources`、JavaFX 静态库还得手工打 JNI 版本补丁。换 jpackage 后这些全部消失，代价只是产物大一点、启动慢几百毫秒，换来**功能与开发环境完全一致**。
-
-**怎么确认打包没漏东西**
-
-直接双击 `dist\daliwan_tool\大力丸.exe` 走一遍常用功能即可。源码级验证跑 `mvn test`（core 层全部逻辑）。改完 PDF / 文档 / 二维码后也可用 `tools/` 下的命令行冒烟脚本快速复验。
+直接双击 `dist\daliwan_tool\大力丸.exe` 走一遍常用功能即可；源码级验证跑 `mvn test`（core 层全部逻辑）。
