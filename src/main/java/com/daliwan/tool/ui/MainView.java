@@ -579,16 +579,17 @@ public class MainView extends BorderPane {
         String win11Hint = win11
                 ? "。Win11 下它会收在「显示更多选项」里，按 Shift + 右键可直接看到"
                 : "";
-        // 不管挂几个动作，右键里都只有一个「大力丸」入口，具体动作在二级菜单里
+        // 只有一个动作就平铺，动作多才收成二级菜单——能少点一下就少点一下
         String pdfNote = supported
                 ? "写入当前用户注册表（HKCU），不需要管理员权限；覆盖 "
                         + ContextMenuIntegration.extensionSummary(List.of(ContextMenuIntegration.TO_PDF))
-                        + "，右键里只多一个「" + ContextMenuIntegration.MENU_TITLE + "」子菜单"
-                        + win11Hint
+                        + "，右键里直接是「"
+                        + ContextMenuIntegration.flatMenuText(ContextMenuIntegration.TO_PDF)
+                        + "」（就一个动作，不再套子菜单）" + win11Hint
                 : devNote;
         String officeNote = supported
-                ? "同样只写当前用户注册表；.pdf 上也是「" + ContextMenuIntegration.MENU_TITLE
-                        + "」一个入口，展开后是「"
+                ? "同样只写当前用户注册表；.pdf 上可转的格式多，收成一个「"
+                        + ContextMenuIntegration.MENU_TITLE + "」子菜单，展开后是「"
                         + ContextMenuIntegration.submenuSummary(ContextMenuIntegration.PDF_TO_OFFICE)
                         + "」四项" + win11Hint
                 : devNote;
@@ -596,7 +597,7 @@ public class MainView extends BorderPane {
         List<SettingsPane.Option> options = new ArrayList<>(3);
         options.add(new SettingsPane.Option(SHELL_PDF_OPTION, "系统集成",
                 "右键菜单：Office 转 PDF",
-                "在 Word / Excel / PPT 文件上点右键，子菜单里选「转 PDF」",
+                "在 Word / Excel / PPT 文件上点右键，直接生成 PDF",
                 settings.shellPdfMenu(), supported, pdfNote));
         options.add(new SettingsPane.Option(SHELL_OFFICE_OPTION, "系统集成",
                 "右键菜单：PDF 转 Office",

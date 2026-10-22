@@ -127,8 +127,29 @@ public final class ContextMenuIntegration {
     }
 
     /** 二级菜单项的注册表键路径（父键下的 Shell 子键）。 */
-    public static String keyPath(MenuVerb verb, String extension) {
+    public static String childKeyPath(MenuVerb verb, String extension) {
         return keyPath(extension) + "\\Shell\\" + verb.key();
+    }
+
+    /** 平铺（只有一个动作）时的注册表键路径。 */
+    public static String flatKeyPath(MenuVerb verb, String extension) {
+        return "HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\"
+                + normalize(extension) + "\\shell\\" + verb.key();
+    }
+
+    /**
+     * 这个扩展名上要不要收成二级菜单：动作多于一个才收，只有一个就平铺。
+     *
+     * <p>Office 文件只能转 PDF，为它多造一层子菜单是纯粹的额外点击；
+     * PDF 能转四种格式，平铺就会把右键拉长，这时候才值得收起来。
+     */
+    public static boolean usesCascade(String extension, Collection<MenuVerb> verbs) {
+        return groupByExtension(verbs).getOrDefault(normalize(extension), List.of()).size() > 1;
+    }
+
+    /** 平铺时菜单上的完整文字，如「大力丸 · 转 PDF」。 */
+    public static String flatMenuText(MenuVerb verb) {
+        return MENU_TITLE + " · " + verb.menuText();
     }
 
     /** 集中键里同一项的路径（{@code ExtendedSubCommandsKey} 用）。 */
@@ -210,19 +231,36 @@ public final class ContextMenuIntegration {
         script.append(legacyCleanup());
         for (Map.Entry<String, List<MenuVerb>> entry : groupByExtension(verbs).entrySet()) {
             String extension = entry.getKey();
+            List<MenuVerb> items = entry.getValue();
             script.append("$ext = ").append(psString(extension)).append("\r\n");
+            if (items.size() == 1) {
+                // 只有一项就平铺：点一下直接干，不用先展开
+                script.append(removeCascadeSnippet());
+                appendFlatItem(script, items.get(0), quotedPrefix, icon, withIcon);
+                continue;
+            }
+            // 多项才收成二级：右键里只留一个「大力丸」入口
             String base = "\"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext\\shell\\"
                     + MENU_KEY + "\"";
             script.append("$base = ").append(base).append("\r\n");
             // 注意：New-Item -Force 在注册表里是「重建」，会把已建好的子菜单冲掉，
             // 所以这里只在键不存在时创建——重复安装时才不会丢掉上一次的动作
             script.append("if (-not (Test-Path $base)) { New-Item -Path $base -Force | Out-Null }\r\n");
-            appendValue(script, "$base", "(default)", psString(MENU_TITLE));
+            // 关键：父键的默认值必须留空（未设置），只靠 MUIVerb 显示名字。
+            // 一旦写了默认值，资源管理器就把它当成普通菜单项——既没有箭头，
+            // 也没有 command 可执行，点下去毫无反应。
+            // Remove-ItemProperty 删不掉默认值，只能走 .NET 接口
+            script.append("$rel = \"Software\\Classes\\SystemFileAssociations\\$ext\\shell\\")
+                    .append(MENU_KEY).append("\"\r\n");
+            script.append("$rk = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($rel, $true)\r\n");
+            script.append("if ($rk -ne $null) { $rk.DeleteValue(\"\", $false); $rk.Close() }\r\n");
             appendValue(script, "$base", "MUIVerb", psString(MENU_TITLE));
             // 空串是关键：告诉资源管理器「这是个子菜单，命令在下面自己找」
             appendValue(script, "$base", "SubCommands", "''");
+            // 相对 HKCR 的路径：HKCR 是 HKCU/HKLM 的 Classes 合并视图，
+            // 不能再带 Software\Classes 前缀，否则指向一个不存在的键
             appendValue(script, "$base", "ExtendedSubCommandsKey",
-                    psString("Software\\Classes\\" + CASCADE_ROOT + "\\" + extension));
+                    psString(CASCADE_ROOT + "\\" + extension));
             appendValue(script, "$base", "MultiSelectModel", "'Document'");
             if (withIcon) {
                 appendValue(script, "$base", "Icon", psString(icon));
@@ -298,6 +336,32 @@ public final class ContextMenuIntegration {
                 .append(" -PropertyType String -Force | Out-Null\r\n");
     }
 
+    /** 平铺写一个菜单项：键 + 显示名 + 图标 + command。 */
+    private static void appendFlatItem(StringBuilder script, MenuVerb verb, String quotedPrefix,
+                                       String icon, boolean withIcon) {
+        script.append("$item = \"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext\\shell\\")
+                .append(verb.key()).append("\"\r\n");
+        script.append("if (-not (Test-Path $item)) { New-Item -Path $item -Force | Out-Null }\r\n");
+        appendValue(script, "$item", "(default)", psString(flatMenuText(verb)));
+        appendValue(script, "$item", "MUIVerb", psString(flatMenuText(verb)));
+        appendValue(script, "$item", "MultiSelectModel", "'Document'");
+        if (withIcon) {
+            appendValue(script, "$item", "Icon", psString(icon));
+        }
+        script.append("$run = \"$item\\command\"\r\n");
+        script.append("if (-not (Test-Path $run)) { New-Item -Path $run -Force | Out-Null }\r\n");
+        appendValue(script, "$run", "(default)", psString(commandValue(verb, quotedPrefix)));
+    }
+
+    /** 删掉某个扩展名上的一级入口与集中键（改回平铺时用得上）。 */
+    private static String removeCascadeSnippet() {
+        return "$base = \"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext\\shell\\" + MENU_KEY
+                + "\"\r\n"
+                + "if (Test-Path $base) { Remove-Item -Path $base -Recurse -Force }\r\n"
+                + "$store = \"HKCU:\\Software\\Classes\\" + CASCADE_ROOT + "\\$ext\"\r\n"
+                + "if (Test-Path $store) { Remove-Item -Path $store -Recurse -Force }\r\n";
+    }
+
     /** 通知外壳刷新关联缓存，否则右键菜单可能要等重启才出现。 */
     private static String notifySnippet() {
         return "$sig = '[DllImport(\"shell32.dll\")] public static extern void SHChangeNotify(int e, int f, IntPtr a, IntPtr b);'\r\n"
@@ -311,21 +375,40 @@ public final class ContextMenuIntegration {
         StringBuilder reg = new StringBuilder(REG_HEADER).append("\r\n\r\n");
         for (Map.Entry<String, List<MenuVerb>> entry : groupByExtension(verbs).entrySet()) {
             String extension = entry.getKey();
+            List<MenuVerb> items = entry.getValue();
+            if (items.size() == 1) {
+                // 只有一个动作：平铺，顺手把可能残留的一级入口删掉
+                reg.append("[-").append(keyPath(extension)).append("]\r\n");
+                reg.append("[-HKEY_CURRENT_USER\\Software\\Classes\\").append(CASCADE_ROOT)
+                        .append("\\").append(extension).append("]\r\n");
+                MenuVerb verb = items.get(0);
+                reg.append('[').append(flatKeyPath(verb, extension)).append("]\r\n");
+                reg.append("@=\"").append(escape(flatMenuText(verb))).append("\"\r\n");
+                reg.append("\"MUIVerb\"=\"").append(escape(flatMenuText(verb))).append("\"\r\n");
+                reg.append("\"MultiSelectModel\"=\"Document\"\r\n");
+                if (withIcon) {
+                    reg.append("\"Icon\"=\"").append(escape(icon)).append("\"\r\n");
+                }
+                reg.append('[').append(flatKeyPath(verb, extension)).append("\\command]\r\n");
+                reg.append("@=\"").append(escape(commandValue(verb, quotedPrefix)))
+                        .append("\"\r\n\r\n");
+                continue;
+            }
             String parent = keyPath(extension);
             reg.append('[').append(parent).append("]\r\n");
-            reg.append("@=\"").append(escape(MENU_TITLE)).append("\"\r\n");
+            // 父键默认值留空（子菜单的硬性要求），名字只写在 MUIVerb 上
+            reg.append("@=\"\"\r\n");
             reg.append("\"MUIVerb\"=\"").append(escape(MENU_TITLE)).append("\"\r\n");
             reg.append("\"SubCommands\"=\"\"\r\n");
             reg.append("\"ExtendedSubCommandsKey\"=\"")
-                    .append(escape("Software\\Classes\\" + CASCADE_ROOT + "\\" + extension))
-                    .append("\"\r\n");
+                    .append(escape(CASCADE_ROOT + "\\" + extension)).append("\"\r\n");
             reg.append("\"MultiSelectModel\"=\"Document\"\r\n");
             if (withIcon) {
                 reg.append("\"Icon\"=\"").append(escape(icon)).append("\"\r\n");
             }
             reg.append("\r\n");
             for (MenuVerb verb : entry.getValue()) {
-                for (String key : List.of(keyPath(verb, extension), storeKeyPath(verb, extension))) {
+                for (String key : List.of(childKeyPath(verb, extension), storeKeyPath(verb, extension))) {
                     reg.append('[').append(key).append("]\r\n");
                     reg.append("@=\"").append(escape(verb.menuText())).append("\"\r\n");
                     reg.append("\"MultiSelectModel\"=\"Document\"\r\n");
@@ -344,10 +427,15 @@ public final class ContextMenuIntegration {
     /** .reg 卸载内容：减号前缀表示删除整棵键。 */
     static String regUninstall(Collection<MenuVerb> verbs) {
         StringBuilder reg = new StringBuilder(REG_HEADER).append("\r\n\r\n");
-        for (String extension : groupByExtension(verbs).keySet()) {
+        for (Map.Entry<String, List<MenuVerb>> entry : groupByExtension(verbs).entrySet()) {
+            String extension = entry.getKey();
             reg.append("[-").append(keyPath(extension)).append("]\r\n");
             reg.append("[-HKEY_CURRENT_USER\\Software\\Classes\\").append(CASCADE_ROOT)
                     .append("\\").append(extension).append("]\r\n");
+            // 平铺形态（单动作）可能也写过，一并删掉
+            for (MenuVerb verb : entry.getValue()) {
+                reg.append("[-").append(flatKeyPath(verb, extension)).append("]\r\n");
+            }
         }
         return reg.toString();
     }

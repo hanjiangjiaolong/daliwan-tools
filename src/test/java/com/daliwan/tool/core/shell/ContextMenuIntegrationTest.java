@@ -11,8 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ContextMenuIntegrationTest {
 
+    private static final String PREFIX = "\"C:\\Tools\\大力丸.exe\"";
+    private static final String ICON = "C:\\Tools\\大力丸.exe,0";
+
     @Test
-    @DisplayName("一级菜单落在当前用户的 SystemFileAssociations 下，键名统一为 Daliwan")
+    @DisplayName("级联父键落在当前用户的 SystemFileAssociations 下")
     void buildsUserScopeKey() {
         assertEquals("HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.docx\\shell\\Daliwan",
                 ContextMenuIntegration.keyPath(".docx"));
@@ -30,7 +33,14 @@ class ContextMenuIntegrationTest {
     void childKeySitsUnderParent() {
         assertEquals("HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.pdf\\shell\\Daliwan"
                         + "\\Shell\\DaliwanPdfToWord",
-                ContextMenuIntegration.keyPath(ContextMenuIntegration.PDF_TO_OFFICE.get(0), ".pdf"));
+                ContextMenuIntegration.childKeyPath(ContextMenuIntegration.PDF_TO_OFFICE.get(0), ".pdf"));
+    }
+
+    @Test
+    @DisplayName("平铺项直接挂在 shell 下，键名就是菜单项自己的 key")
+    void flatKeySitsDirectlyUnderShell() {
+        assertEquals("HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.docx\\shell\\DaliwanToPdf",
+                ContextMenuIntegration.flatKeyPath(ContextMenuIntegration.TO_PDF, ".docx"));
     }
 
     @Test
@@ -38,8 +48,24 @@ class ContextMenuIntegrationTest {
     void storeKeyIsPerExtension() {
         assertEquals("HKEY_CURRENT_USER\\Software\\Classes\\DaliwanMenu\\.pdf\\shell\\DaliwanPdfToText",
                 ContextMenuIntegration.storeKeyPath(ContextMenuIntegration.PDF_TO_OFFICE.get(3), ".pdf"));
-        assertEquals("HKEY_CURRENT_USER\\Software\\Classes\\DaliwanMenu\\.docx\\shell\\DaliwanToPdf",
-                ContextMenuIntegration.storeKeyPath(ContextMenuIntegration.TO_PDF, ".docx"));
+    }
+
+    @Test
+    @DisplayName("只有一个动作就平铺，多个动作才收成二级")
+    void cascadeOnlyWhenSeveralActions() {
+        assertFalse(ContextMenuIntegration.usesCascade(".docx", List.of(ContextMenuIntegration.TO_PDF)),
+                ".docx 只能转 PDF，不该多一层子菜单");
+        assertTrue(ContextMenuIntegration.usesCascade(".pdf", ContextMenuIntegration.PDF_TO_OFFICE),
+                ".pdf 有四个动作，收成二级");
+        assertFalse(ContextMenuIntegration.usesCascade(".pdf", ContextMenuIntegration.PDF_TO_OFFICE.subList(0, 1)),
+                "只装一个动作时也不该收成二级");
+    }
+
+    @Test
+    @DisplayName("平铺时菜单名带上品牌前缀，二级里则不重复")
+    void flatTextCarriesBrand() {
+        assertEquals("大力丸 · 转 PDF", ContextMenuIntegration.flatMenuText(ContextMenuIntegration.TO_PDF));
+        assertEquals("转 Word", ContextMenuIntegration.PDF_TO_OFFICE.get(0).menuText());
     }
 
     @Test
@@ -80,48 +106,64 @@ class ContextMenuIntegrationTest {
     }
 
     @Test
-    @DisplayName("安装脚本把动作收进一级菜单，并覆盖所有扩展名")
-    void installScriptBuildsCascade() {
-        String command = "\"C:\\Tools\\大力丸.exe\" --to-pdf \"%1\"";
+    @DisplayName("单动作扩展名写成平铺项：名字带前缀、直接带 command")
+    void singleActionStaysFlat() {
         String script = ContextMenuIntegration.installScript(
-                List.of(ContextMenuIntegration.TO_PDF),
-                "\"C:\\Tools\\大力丸.exe\"", "C:\\Tools\\大力丸.exe,0", true);
+                List.of(ContextMenuIntegration.TO_PDF), PREFIX, ICON, true);
 
-        assertTrue(script.contains("SystemFileAssociations\\$ext\\shell\\Daliwan"));
-        assertTrue(script.contains("'MUIVerb'"), "一级菜单名写在 MUIVerb 上");
-        assertTrue(script.contains(psTitle()), "一级菜单名是「大力丸」");
-        assertTrue(script.contains("'SubCommands' -Value ''"), "SubCommands 置空才是子菜单");
-        assertTrue(script.contains("'ExtendedSubCommandsKey'"));
-        assertTrue(script.contains("Software\\Classes\\DaliwanMenu\\$ext"));
-        assertTrue(script.contains("SHChangeNotify"));
-        assertTrue(script.contains("'MultiSelectModel'"));
-        assertTrue(script.contains(command), "命令行原样写入，单引号字符串里不做反斜杠转义");
+        assertTrue(script.contains("SystemFileAssociations\\$ext\\shell\\DaliwanToPdf"),
+                "平铺就在 shell 下，不再套一层 Daliwan");
+        assertTrue(script.contains("'大力丸 · 转 PDF'"));
+        assertFalse(script.contains("'SubCommands'"), "只有一项时不需要子菜单标记");
+        assertFalse(script.contains("New-ItemProperty -Path $base"), "平铺时不往一级入口写任何值");
+        assertTrue(script.contains(PREFIX + " --to-pdf \"%1\""));
         for (String extension : ContextMenuIntegration.EXTENSIONS) {
             assertTrue(script.contains("'" + extension + "'"), "缺少扩展名：" + extension);
         }
     }
 
     @Test
+    @DisplayName("多动作扩展名收成二级菜单，父键默认值留空")
+    void installScriptBuildsCascade() {
+        String script = ContextMenuIntegration.installScript(
+                ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
+
+        assertTrue(script.contains("SystemFileAssociations\\$ext\\shell\\Daliwan"));
+        assertTrue(script.contains("'MUIVerb'"), "一级菜单名写在 MUIVerb 上");
+        assertTrue(script.contains(psTitle()), "一级菜单名是「大力丸」");
+        assertFalse(script.contains("New-ItemProperty -Path $base -Name '(default)'"),
+                "父键写了默认值就会被当成普通菜单项，子菜单出不来");
+        assertTrue(script.contains("[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey"),
+                "只能用 .NET 接口删默认值，Remove-ItemProperty 删不掉");
+        assertTrue(script.contains("'SubCommands' -Value ''"), "SubCommands 置空才是子菜单");
+        assertTrue(script.contains("'ExtendedSubCommandsKey'"));
+        // 相对 HKCR 的路径（单引号里不插值，所以直接写扩展名），不能带 Software\Classes 前缀
+        assertTrue(script.contains("'DaliwanMenu\\.pdf'"));
+        assertFalse(script.contains("'Software\\Classes\\DaliwanMenu"));
+        assertTrue(script.contains("SHChangeNotify"));
+        assertTrue(script.contains("'MultiSelectModel'"));
+    }
+
+    @Test
     @DisplayName("旧版平铺的键在安装时先清掉，避免右键里出现两套菜单")
     void installScriptCleansLegacyFlatKeys() {
         String script = ContextMenuIntegration.installScript(
-                List.of(ContextMenuIntegration.TO_PDF),
-                "\"C:\\Tools\\大力丸.exe\"", "C:\\Tools\\大力丸.exe,0", true);
+                ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
 
         assertTrue(script.contains("$old = \"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext"
                 + "\\shell\\DaliwanToPdf\""));
         assertTrue(script.contains("$old = \"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext"
                 + "\\shell\\DaliwanPdfToWord\""));
-        // 清理必须发生在新键写入之前，否则会把刚写的子键删掉
-        assertTrue(script.indexOf("$old") < script.indexOf("SystemFileAssociations\\$ext\\shell\\Daliwan\""));
+        assertTrue(script.indexOf("$old") < script.indexOf("$base = \"HKCU:\\Software\\Classes"
+                + "\\SystemFileAssociations\\$ext\\shell\\Daliwan\""),
+                "清理必须发生在写入之前");
     }
 
     @Test
     @DisplayName("没有自带图标时脚本不写 Icon 值")
     void installScriptSkipsIconWhenUnavailable() {
         String script = ContextMenuIntegration.installScript(
-                List.of(ContextMenuIntegration.TO_PDF),
-                "\"java.exe\" -jar app.jar", "java.exe,0", false);
+                List.of(ContextMenuIntegration.TO_PDF), "\"java.exe\" -jar app.jar", "java.exe,0", false);
         assertFalse(script.contains("'Icon'"));
     }
 
@@ -129,8 +171,7 @@ class ContextMenuIntegrationTest {
     @DisplayName("PDF 那一组四个菜单项各写各的开关，互不串台")
     void pdfVerbsUseTheirOwnFlags() {
         String script = ContextMenuIntegration.installScript(
-                ContextMenuIntegration.PDF_TO_OFFICE,
-                "\"C:\\Tools\\大力丸.exe\"", "C:\\Tools\\大力丸.exe,0", true);
+                ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
 
         assertEquals(4, ContextMenuIntegration.PDF_TO_OFFICE.size());
         for (ContextMenuIntegration.MenuVerb verb : ContextMenuIntegration.PDF_TO_OFFICE) {
@@ -151,8 +192,7 @@ class ContextMenuIntegrationTest {
     @DisplayName("二级菜单两套写法都写：父键 Shell 子键 + 集中键")
     void writesBothCascadeFlavours() {
         String script = ContextMenuIntegration.installScript(
-                ContextMenuIntegration.PDF_TO_OFFICE,
-                "\"C:\\Tools\\大力丸.exe\"", "C:\\Tools\\大力丸.exe,0", true);
+                ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
 
         assertTrue(script.contains("$item = \"$base\\Shell\\DaliwanPdfToWord\""));
         assertTrue(script.contains("$item = \"HKCU:\\Software\\Classes\\DaliwanMenu\\$ext"
@@ -160,7 +200,7 @@ class ContextMenuIntegrationTest {
     }
 
     @Test
-    @DisplayName("卸载脚本删掉一级菜单、集中键与旧键")
+    @DisplayName("卸载脚本删掉一级菜单、集中键、平铺键与旧键")
     void uninstallScriptRemovesOwnKeys() {
         String script = ContextMenuIntegration.uninstallScript(ContextMenuIntegration.ALL);
         assertTrue(script.contains("Remove-Item -Path $base -Recurse -Force"));
@@ -172,30 +212,47 @@ class ContextMenuIntegrationTest {
     }
 
     @Test
-    @DisplayName("reg 兜底内容按 .reg 语法逐项列出")
-    void regFallbackListsAllKeys() {
+    @DisplayName("reg 兜底：单动作写平铺项")
+    void regFallbackWritesFlatItem() {
         String reg = ContextMenuIntegration.regInstall(
-                List.of(ContextMenuIntegration.TO_PDF),
-                "\"C:\\Tools\\大力丸.exe\"", "C:\\Tools\\大力丸.exe,0", true);
+                List.of(ContextMenuIntegration.TO_PDF), PREFIX, ICON, true);
         assertTrue(reg.startsWith("Windows Registry Editor Version 5.00"));
-        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.docx\\shell\\Daliwan]"));
-        assertTrue(reg.contains("\"MUIVerb\"=\"大力丸\""));
-        assertTrue(reg.contains("\"SubCommands\"=\"\""));
-        assertTrue(reg.contains("\"ExtendedSubCommandsKey\"=\"Software\\\\Classes\\\\DaliwanMenu\\\\.docx\""));
         assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.docx"
-                + "\\shell\\Daliwan\\Shell\\DaliwanToPdf\\command]"));
-        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\DaliwanMenu\\.docx"
+                + "\\shell\\DaliwanToPdf]"));
+        assertTrue(reg.contains("@=\"大力丸 · 转 PDF\""));
+        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.docx"
                 + "\\shell\\DaliwanToPdf\\command]"));
         assertTrue(reg.contains("\"MultiSelectModel\"=\"Document\""));
+        assertFalse(reg.contains("\"SubCommands\""), "单动作不写子菜单标记");
     }
 
     @Test
-    @DisplayName("reg 卸载把一级菜单与集中键都删掉")
+    @DisplayName("reg 兜底：多动作写级联父键，默认值为空")
+    void regFallbackWritesCascade() {
+        String reg = ContextMenuIntegration.regInstall(
+                ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
+        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.pdf"
+                + "\\shell\\Daliwan]"));
+        assertTrue(reg.contains("\"MUIVerb\"=\"大力丸\""));
+        assertTrue(reg.contains("\"SubCommands\"=\"\""));
+        assertTrue(reg.contains("\"ExtendedSubCommandsKey\"=\"DaliwanMenu\\\\.pdf\""));
+        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.pdf"
+                + "\\shell\\Daliwan]\r\n@=\"\""), "父键默认值为空，否则不会展开子菜单");
+        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.pdf"
+                + "\\shell\\Daliwan\\Shell\\DaliwanPdfToWord\\command]"));
+        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\DaliwanMenu\\.pdf"
+                + "\\shell\\DaliwanPdfToWord\\command]"));
+    }
+
+    @Test
+    @DisplayName("reg 卸载把级联键、集中键、平铺键都删掉")
     void regUninstallListsEveryVerb() {
         String reg = ContextMenuIntegration.regUninstall(ContextMenuIntegration.ALL);
         assertTrue(reg.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.pdf\\shell\\Daliwan]"));
         assertTrue(reg.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.docx\\shell\\Daliwan]"));
         assertTrue(reg.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\DaliwanMenu\\.pdf]"));
+        assertTrue(reg.contains("[-HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.docx"
+                + "\\shell\\DaliwanToPdf]"));
     }
 
     @Test

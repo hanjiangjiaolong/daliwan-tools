@@ -248,12 +248,12 @@ mvn javafx:run
 **窗口尺寸**：初始宽高取屏幕可用区域的 62% × 84%，并限制在 880×620 到 1600×1000 之间，同时保证不超出可用区域；最小尺寸也随屏幕收缩，小屏上仍可继续缩小窗口。
 
 **资源管理器右键菜单**（设置页「系统集成」组）是两个独立开关，都只写当前用户的注册表，不需要管理员权限。
-不管挂了几个动作，右键里**只多出一个「大力丸」**，具体动作收在它的二级菜单里：
+**只有一个动作就平铺，动作多了才收成二级菜单**——能少点一下就少点一下：
 
-| 开关 | 出现在哪些文件上 | 一级菜单 | 展开后的动作 | 结果 |
-| --- | --- | --- | --- | --- |
-| Office 转 PDF | `.doc` `.docx` `.rtf` `.odt` `.xls` `.xlsx` `.xlsm` `.xlsb` `.csv` `.ods` `.ppt` `.pptx` `.pptm` `.pps` `.ppsx` `.odp` | 大力丸 | 转 PDF | 源文件旁边生成同名 PDF |
-| PDF 转 Office | `.pdf` | 大力丸 | 转 Word / 转 Excel / 转 PPT / 提取文本 | 分别生成 `.docx` / `.xlsx` / `.pptx` / `.txt` |
+| 开关 | 出现在哪些文件上 | 右键里长什么样 | 结果 |
+| --- | --- | --- | --- |
+| Office 转 PDF | `.doc` `.docx` `.rtf` `.odt` `.xls` `.xlsx` `.xlsm` `.xlsb` `.csv` `.ods` `.ppt` `.pptx` `.pptm` `.pps` `.ppsx` `.odp` | 大力丸 · 转 PDF（直接点） | 源文件旁边生成同名 PDF |
+| PDF 转 Office | `.pdf` | 大力丸 ▸ 转 Word / 转 Excel / 转 PPT / 提取文本 | 分别生成 `.docx` / `.xlsx` / `.pptx` / `.txt` |
 
 点一下即在源文件所在目录生成结果，同名文件自动加序号，绝不覆盖。程序目录搬家后，启动时会按当前路径重写一遍注册表，不用手动再开一次开关。
 
@@ -261,11 +261,19 @@ mvn javafx:run
 > 见 `core/shell/ContextMenuIntegration`：要加新格式，往 `PDF_TO_OFFICE` 里加一项即可，
 > 安装脚本、卸载脚本与 `.reg` 兜底都会自动跟上。
 >
-> 子菜单在 Windows 上有两种写法，各有一半机器只认其中一种，所以两套都写：
+> 子菜单只在动作多于一个时才建（见 `usesCascade`）：Office 文件只能转 PDF，为它多造一层
+> 是纯粹的额外点击；PDF 能转四种格式，平铺会把右键拉长，这时候才收起来。
+> Windows 的级联菜单有两种写法，各有一半机器只认其中一种，所以两套都写：
 > 父键 `SubCommands` 置空 + 父键自带 `Shell` 子键（全部在 HKCU 内，不需要管理员），
-> 以及 `ExtendedSubCommandsKey` 指向 `Software\Classes\DaliwanMenu\<扩展名>` 这个按扩展名分开的
-> 集中键（这样 `.pdf` 的子菜单里不会冒出「转 PDF」这种没意义的项）。
-> 另外安装时会顺手清掉旧版平铺的键，避免右键里同时出现两套菜单。
+> 以及 `ExtendedSubCommandsKey` 指向 `DaliwanMenu\<扩展名>` 这个按扩展名分开的集中键
+> （路径相对 HKCR，不能再带 `Software\Classes` 前缀；这样 `.pdf` 的子菜单里也不会冒出
+> 「转 PDF」这种没意义的项）。
+>
+> 两条踩过的坑：一是**父键的默认值必须留空**，只把名字写在 `MUIVerb` 上——写了默认值，
+> 资源管理器就把它当普通菜单项，既没有箭头也没有 command，点了毫无反应；
+> `Remove-ItemProperty` 删不掉默认值，得走 `[Microsoft.Win32.Registry]` 的 `DeleteValue("")`。
+> 二是注册表的 `New-Item -Force` 是「重建」，会把已建好的子项清空，所以建键前先判断存在与否。
+> 安装时还会顺手清掉旧版平铺的键，避免右键里同时出现两套菜单。
 
 Win11 换了新的精简右键菜单，只认实现了 `IExplorerCommand` 并带包标识的 COM 扩展，传统 `shell\command` 注册一律被折进「显示更多选项」（26H2 起还要先在上层菜单里把这一项打开才看得到）。绿色版不打包 MSIX，因此同一组里还有第二个开关：打开后往 `HKCU\Software\Classes\CLSID` 写一个指向空 `InprocServer32` 的键，外壳便退回经典菜单，这一项就直接出现在第一层。改完点「立即重启」重启一次资源管理器即可；关掉开关会删掉整棵键、恢复 Win11 默认外观。不想改菜单样式的话，`Shift + 右键`（或 `Shift + F10`）每次都能直接调出经典菜单。
 
@@ -337,7 +345,7 @@ mvn test
 | `OcrServiceTest` | 5 | 引擎可用性、中英识别、空白图 |
 | `RandomServiceTest` | 9 | UUID 格式与批量、字符集、排除易混淆字符、长度边界 |
 | `PdfCommandTest` | 4 | 命令行参数解析、批量转换、失败信息 |
-| `ContextMenuIntegrationTest` | 19 | 两级菜单的父键 / 二级子键 / 集中键生成、`SubCommands` 空值与 `ExtendedSubCommandsKey`、旧键清理、卸载与 .reg 兜底 |
+| `ContextMenuIntegrationTest` | 24 | 两级菜单的父键 / 二级子键 / 集中键生成、`SubCommands` 空值与 `ExtendedSubCommandsKey`、旧键清理、卸载与 .reg 兜底 |
 | `Win11MenuTest` | 10 | CLSID 键路径、构建号解析（含 BOM / 空行 / 报错文本里的假数字）、HKCU 路径转换、安装与卸载脚本互为镜像、资源管理器重启脚本 |
 | `FileNamesTest` | 5 | 后缀大小写、重名追加序号、无扩展名 |
 | `PngEncoderTest` | 4 | 编码可解码、尺寸与像素一致 |
