@@ -257,7 +257,7 @@
 | OCR | RapidOCR 0.0.7 + PP-OCRv4 ONNX 模型（本地推理） |
 | Office | Stirling Office Convert 0.2.2 + PDFBox 3.0.8 + POI 5.5.1（MIT / Apache-2.0，内嵌，无需 Office / LibreOffice；需 Java 25） |
 | 打包 | maven-shade（可执行 fat jar）→ jlink（精简运行时）→ jpackage（app-image）→ zip |
-| 体积 | fat jar 63 MB ｜ 绿色版 zip 95 MB ｜ 解压后 115 MB（运行时 52 MB + 应用 63 MB）<br>大头：OCR 模型与动态库二十 MB、POI + fesod 十二 MB、Stirling + PDFBox 六 MB、JavaFX 六 MB；本程序代码 0.4 MB |
+| 体积 | fat jar 63 MB ｜ 绿色版 zip 114 MB ｜ 解压后 159 MB（运行时 95 MB + 应用 64 MB）<br>大头：Java 25 运行时九十五 MB（GraalVM jlink；换 Temurin 25 可回到 52 MB）、OCR 模型与动态库二十 MB、POI + fesod 十二 MB；本程序代码 0.4 MB |
 | 质量 | 304 个单元测试，`core` 层不引用 JavaFX，界面切换集中在应用入口 |
 
 ---
@@ -321,8 +321,8 @@
 
 ### D. 工程与发布
 
-13. **体积**：换掉 Aspose 三件套（44 MB）后 zip 已从 134 MB 降到 95 MB，剩下的空间大头是
-    OCR 模型（20 MB）与表格 / 文档引擎。运行时已用 jlink 裁到 52 MB，再往下的空间在功能上：
+13. **体积**：换掉 Aspose 三件套（44 MB）后 zip 从 134 MB 降到 114 MB（应用层小了近一半，
+    但 Java 25 运行时比 21 大：52 → 95 MB，换 Temurin 25 可回落）。再往下的空间在功能上：
     可以做「精简版」（只含文本 + PDF，约 30 MB）与「完整版」两条线，或者把 PPT 引擎改成首次使用时下载。
 14. **安装包**：装 WiX 出 msi，或用 Inno Setup 包一层绿色版目录，换来卸载项、文件关联、开机启动。
 15. **引擎策略可配置**：设置里给「优先内置引擎 / 优先 LibreOffice」的开关；

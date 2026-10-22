@@ -560,9 +560,9 @@ release/daliwan_tool-windows-x64.zip ← 上面这个目录的压缩包，方便
 
 ![应用图标](docs/icon.png)
 
-整个 `dist/daliwan_tool` 目录就是分发单位（**约 115 MB**：应用 jar 63 MB + 自带运行时 52 MB；压缩包 **95 MB**），拷到 U 盘也能直接跑，**目标机器不需要安装 Java**。
+整个 `dist/daliwan_tool` 目录就是分发单位（**约 159 MB**：应用 jar 63 MB + 自带运行时 95 MB；压缩包 **114 MB**），拷到 U 盘也能直接跑，**目标机器不需要安装 Java**。运行时是 GraalVM 25 的 jlink 产物，比 JDK 21 时代大 43 MB——换 Temurin 25 能压回 52 MB 量级，属可选优化。
 
-体积几乎全在依赖里：OCR 模型与 ONNX 动态库 20 MB、POI + fesod 12 MB、Stirling + PDFBox 约 6 MB、JavaFX 6 MB，本程序自身的代码只有 0.4 MB。换掉 Aspose 三件套（44 MB）后整个包小了四成。也就是说这个工具是「把几个格式转换引擎塞进一个 exe」，不是「Java 太胖」——运行时已经被 jlink 裁到 52 MB（完整 JDK 是 300 MB 量级）。
+体积几乎全在依赖里：OCR 模型与 ONNX 动态库 20 MB、POI + fesod 12 MB、Stirling + PDFBox 约 6 MB、JavaFX 6 MB，本程序自身的代码只有 0.4 MB。换掉 Aspose 三件套（44 MB）后应用层小了近一半，但 Java 25 运行时比 21 大（52 → 95 MB），总包从 134 MB 降到 114 MB。也就是说这个工具是「把几个格式转换引擎塞进一个 exe」，不是「Java 太胖」——运行时已经被 jlink 裁过（完整 JDK 是 300 MB 量级）。
 
 **依赖**：只要一个 JDK 17+（内置 `jpackage` / `jlink`）+ Maven，不需要 GraalVM、VS Build Tools 或 WiX。
 
