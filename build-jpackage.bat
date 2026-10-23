@@ -93,11 +93,16 @@ REM   jdk.localedata     配合 --include-locales=zh,en：全部语言包约 30MB，只留中
 
 REM 不用 java.se 聚合模块：它会连带拉进 java.rmi / java.net.http / java.instrument 等用不到的东西
 
-"%JDK%\bin\jlink.exe" --add-modules java.base,java.desktop,java.logging,java.xml,java.datatransfer,java.prefs,java.management,java.sql,java.sql.rowset,java.naming,java.security.jgss,java.xml.crypto,jdk.charsets,jdk.unsupported,jdk.crypto.ec,jdk.localedata,jdk.jfr,jdk.zipfs ^
-    --include-locales=zh,en --compress=zip-6 ^
+"%JDK%\bin\jlink.exe" --add-modules java.base,java.desktop,java.logging,java.xml,java.datatransfer,java.prefs,java.management,java.sql,java.sql.rowset,java.naming,java.security.jgss,java.xml.crypto,jdk.charsets,jdk.unsupported,jdk.crypto.ec,jdk.localedata,jdk.zipfs ^
+    --include-locales=zh,en --compress=2 ^
     --output target\runtime --strip-debug --no-header-files --no-man-pages
 
 if errorlevel 1 goto fail
+
+REM GraalVM 自带的 JVMCI 编译器（bin\jvmcicompiler.dll，42 MB）用不上：
+REM 删掉它 runtime 直接小掉三分之一，配合 -XX:-UseJVMCICompiler 让 JIT 走回 C2，功能不受影响。
+if exist "target\runtime\bin\jvmcicompiler.dll" del /q "target\runtime\bin\jvmcicompiler.dll"
+if exist "target\runtime\lib\jvm.lib" del /q "target\runtime\lib\jvm.lib"
 
 REM ---------- 3/4 jpackage ----------
 echo [3/4] jpackage 生成应用目录...
@@ -112,7 +117,7 @@ if exist "dist" rmdir /s /q "dist"
     --main-jar daliwan_tool.jar --main-class com.daliwan.tool.Launcher ^
     --runtime-image target\runtime ^
     --icon src\windows\assets\icon.ico ^
-    --java-options "-Dfile.encoding=UTF-8 --enable-native-access=ALL-UNNAMED"
+    --java-options "-Dfile.encoding=UTF-8 --enable-native-access=ALL-UNNAMED -XX:-UseJVMCICompiler"
 if errorlevel 1 goto fail
 if not exist "dist\daliwan_tool\daliwan_tool.exe" (
     echo [错误] dist\daliwan_tool\daliwan_tool.exe 未生成

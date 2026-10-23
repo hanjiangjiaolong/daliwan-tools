@@ -353,9 +353,10 @@
 
 ### D. 工程与发布
 
-13. **体积**：换成 Stirling + LibreOffice 后 zip 从 134 MB 降到 114 MB（应用层小了近一半，
-    但 Java 25 运行时比 21 大：52 → 95 MB，换 Temurin 25 可回落）。再往下的空间在功能上：
-    可以做「精简版」（只含文本 + PDF，约 30 MB）与「完整版」两条线，或者把 PPT 引擎改成首次使用时下载。
+13. **体积**：现在 zip 是 **99 MB**（Gitee 单文件上限 100 MB，卡着上限走）。运行时从 95 MB
+    降到 51 MB：删掉 GraalVM 自带的 `jvmcicompiler.dll`（42 MB，配合 `-XX:-UseJVMCICompiler`
+    走回 C2）、去掉 `jdk.jfr`、模块映像压缩提到 `--compress=2`。再往下挖只有功能层面：
+    OCR 的模型 + 推理库占 20 MB，把它做成可选组件（首次使用时下载）主包能到 79 MB 左右。
 14. **安装包**：装 WiX 出 msi，或用 Inno Setup 包一层绿色版目录，换来卸载项、文件关联、开机启动。
 15. **引擎策略可配置**：设置里给「优先内置引擎 / 优先 LibreOffice」的开关；
     LibreOffice 探测逻辑已经写好，只是没暴露成开关。
