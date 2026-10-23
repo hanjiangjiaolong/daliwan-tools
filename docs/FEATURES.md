@@ -275,7 +275,7 @@
 
 | 层 | 选型 |
 | --- | --- |
-| 运行时 | JDK 25 + JavaFX 21（界面；JavaFX 21 在 JDK 25 上实测正常） |
+| 运行时 | JDK 25 + JavaFX 25（版本与运行时对齐；RichTextFX 需 0.11.7+ 才适配 JavaFX 25） |
 | PDF | Apache PDFBox 3.0.8（拆分 / 合并 / 图片转 PDF / 文本提取） |
 | 二维码 | ZXing 3.5.4（生成 + 识别） |
 | 图片元数据 | metadata-extractor（EXIF / IPTC / XMP） |

@@ -28,7 +28,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>25</maven.compiler.release>
-        <javafx.version>21.0.6</javafx.version>
+        <!--
+            JavaFX 版本与运行时 JDK 对齐（构建与打包都用 25）：JavaFX 25 需要 JDK 25+，
+            反过来用旧版 JavaFX 跑在新 JDK 上属于未测试组合。
+            RichTextFX 需 0.11.7 及以上才适配 JavaFX 25（TextFlow 的 caretShape 改了名）。
+        -->
+        <javafx.version>25.0.5</javafx.version>
         <jackson.version>2.17.2</jackson.version>
         <richtextfx.version>0.11.7</richtextfx.version>
         <zxing.version>3.5.4</zxing.version>

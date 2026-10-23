@@ -1,6 +1,8 @@
 package com.daliwan.tool.util;
 
 import com.daliwan.tool.core.ToolSettings;
+import javafx.application.ColorScheme;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,12 +17,14 @@ import java.util.regex.Pattern;
 /**
  * 读取操作系统的明暗配色偏好。
  *
- * <p>Windows 上读注册表 {@code AppsUseLightTheme}（0 为深色、1 为浅色）；
- * macOS 上读 {@code AppleInterfaceStyle}。任一环节失败都退回浅色，
+ * <p>优先走 JavaFX 25 的系统偏好（{@link Platform#getPreferences()}），
+ * JavaFX 自己就能拿到当前配色、还会在系统切换时回调，不再需要起外部进程；
+ * toolkit 没启动的场合（右键转 PDF 的结果卡片这类独立短进程、单元测试）
+ * 拿不到偏好，才退回读注册表 / {@code defaults} 命令。任一环节失败都退回浅色，
  * 界面最坏情况只是没跟随系统，不应该因为探测失败而让启动卡住或报错。
  *
- * <p>JavaFX 21 没有暴露系统配色（22 才有 {@code Platform.getPreferences()}），
- * 因此这里用一个带超时的外部命令读取，并限制为只在启动与窗口重新聚焦时调用。
+ * <p>探测结果会落盘缓存（{@link #remember(String)}）：独立短进程直接读文件，
+ * 连 JavaFX 都不用起。
  */
 public final class SystemTheme {
 
@@ -42,7 +46,7 @@ public final class SystemTheme {
      * 最近一次实际生效的配色。
      *
      * <p>主界面启动时会探测一次并写在这里，右菜单转 PDF 这类独立的短进程
-     * 直接读文件即可，不用再起一次 {@code reg}。
+     * 直接读文件即可，不用再探测一次。
      */
     public static String cached() {
         try {
@@ -72,6 +76,10 @@ public final class SystemTheme {
 
     /** 当前系统配色对应的主题名：{@link ToolSettings#THEME_DARK} 或 {@link ToolSettings#THEME_LIGHT}。 */
     public static String detect() {
+        String fromJavaFx = themeOfColorScheme(schemeOf());
+        if (fromJavaFx != null) {
+            return fromJavaFx;
+        }
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         try {
             if (os.contains("win")) {
@@ -90,6 +98,29 @@ public final class SystemTheme {
             // 探测失败按浅色处理
         }
         return ToolSettings.THEME_LIGHT;
+    }
+
+    /**
+     * JavaFX 系统偏好的当前配色；拿不到（toolkit 未启动、API 不可用）返回 {@code null}。
+     */
+    private static ColorScheme schemeOf() {
+        try {
+            return Platform.getPreferences().getColorScheme();
+        } catch (RuntimeException | LinkageError ignored) {
+            // toolkit 没起来或老版本 JavaFX：交给外部命令兜底
+            return null;
+        }
+    }
+
+    /** 配色枚举转主题名；{@code null} 或未知值返回 {@code null}。 */
+    public static String themeOfColorScheme(ColorScheme scheme) {
+        if (scheme == ColorScheme.DARK) {
+            return ToolSettings.THEME_DARK;
+        }
+        if (scheme == ColorScheme.LIGHT) {
+            return ToolSettings.THEME_LIGHT;
+        }
+        return null;
     }
 
     /**

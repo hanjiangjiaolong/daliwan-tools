@@ -16,6 +16,16 @@
     -fx-faint-focus-color: transparent;
 }
 
+/*
+    JavaFX 25 的 modena 把 *.label 的文字色改成 lookup -fx-text-background-color，
+   而这个变量在我们的主题里没有定义（补全它也没用：菜单、下拉、提示这些 popup 有各自的
+   场景，拿不到主场景 .root 上的变量），lookup 失败会退回默认黑字——深色主题下等于看不见。
+   这里给所有 Label 兜一个主题色：更具体的规则（.hint / .card-title / 菜单项等）在后面覆盖它。
+*/
+.label {
+    -fx-text-fill: -c-text;
+}
+
 .app-root {
     -fx-background-color: -c-bg;
 }

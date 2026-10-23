@@ -339,13 +339,26 @@ public class JsonPane extends VBox {
         tableView.getStyleClass().add("json-table");
         // 表格动辄几千行，滑块同样会被压没
         ScrollBars.installMinThumb(tableView);
-        tableView.setPlaceholder(new Label("没有数据"));
+        tableView.setPlaceholder(placeholderOf("没有数据"));
         tableView.setVisible(false);
         tableView.setManaged(false);
         tablePlaceholder.setVisible(false);
         tablePlaceholder.setManaged(false);
 
         treeHost.getChildren().addAll(tableView, tablePlaceholder);
+    }
+
+    /**
+     * 空表格 / 空列表的占位文字。
+     *
+     * <p>顺手带 hint 样式：裸 Label 只有 modena 的 {@code *.label} 规则给它上色，
+     * 而 JavaFX 25 那条规则 lookup 的变量我们的主题里没有，解析失败会退回默认黑字，
+     * 深色主题下就是一片看不见。
+     */
+    private static Label placeholderOf(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("hint");
+        return label;
     }
 
     /** 树构建的结果：根节点与统计信息，全部在后台线程算好再交给界面。 */

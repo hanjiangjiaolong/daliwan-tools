@@ -17,8 +17,8 @@ import java.util.List;
  * 换主题时替换样式表即可，不需要重建界面，页面里也不该出现写死的颜色。
  *
  * <p>偏好有三种：跟随系统（默认）、浅色、深色。跟随系统时实际配色由
- * {@link SystemTheme} 探测，窗口重新获得焦点时会再探测一次，
- * 用户在系统设置里切换明暗后无需重启。
+ * {@link SystemTheme} 探测，JavaFX 25 的系统偏好监听会在系统切换明暗时实时回调，
+ * 无需重启，也不用等窗口重新聚焦。
  */
 public final class ThemeManager {
 
@@ -28,10 +28,13 @@ public final class ThemeManager {
     private static final String DARK = "/com/daliwan/tool/styles/theme-dark.css";
     private static final String LIGHT = "/com/daliwan/tool/styles/theme-light.css";
 
-    /** 两次系统配色探测之间的最小间隔，避免焦点频繁变化时反复起进程。 */
+    /** 两次系统配色探测之间的最小间隔，避免焦点频繁变化时反复探测。 */
     private static final long DETECT_INTERVAL_MILLIS = 1500L;
 
     private static final List<Runnable> LISTENERS = new ArrayList<>();
+
+    /** 系统配色监听只注册一次。 */
+    private static boolean schemeListenerInstalled;
 
     private static Scene scene;
     /** 上次真正发起探测的时间戳。 */
@@ -58,10 +61,41 @@ public final class ThemeManager {
         preference = ToolSettings.isValidTheme(themePreference)
                 ? themePreference : ToolSettings.THEME_SYSTEM;
         apply(resolve(preference));
+        installColorSchemeListener();
         if (ToolSettings.THEME_SYSTEM.equals(preference)) {
             // 启动这一次不做去抖，让配色尽快校准到位
             lastDetectMillis = 0L;
             refreshFromSystem();
+        }
+    }
+
+    /**
+     * 监听系统配色变化（JavaFX 25 的系统偏好 API）。
+     *
+     * <p>用户在系统设置里切换明暗时这里会实时回调，主题立即跟上——
+     * 不再依赖「窗口重新聚焦时探测一次」：切换发生在后台时也能即时生效。
+     * toolkit 未启动（独立短进程、单测）或 API 不可用时静默跳过，
+     * 那些场景本来也不显示主界面。
+     */
+    private static void installColorSchemeListener() {
+        if (schemeListenerInstalled) {
+            return;
+        }
+        schemeListenerInstalled = true;
+        try {
+            Platform.getPreferences().colorSchemeProperty().addListener((observable, old, now) -> {
+                String resolved = SystemTheme.themeOfColorScheme(now);
+                if (resolved == null) {
+                    return;
+                }
+                lastDetected = resolved;
+                if (ToolSettings.THEME_SYSTEM.equals(preference) && !resolved.equals(current)) {
+                    apply(resolved);
+                }
+            });
+        } catch (RuntimeException | LinkageError ignored) {
+            // 拿不到系统偏好就退回原来的探测路径
+            schemeListenerInstalled = false;
         }
     }
 

@@ -135,7 +135,6 @@ public class MainView extends BorderPane {
 
         ThemeManager.onChange(this::refreshThemeIcon);
         refreshThemeIcon();
-        followSystemThemeOnFocus();
 
         // 注册表校准要起 powerShell / reg.exe，一上来就跑会和首屏抢 CPU 与磁盘，
         // 把启动拖慢一截；等窗口画出来、界面空下来了再做，结果一样，只是晚一两秒
@@ -230,25 +229,6 @@ public class MainView extends BorderPane {
         }, "shell-menu-refresh");
         worker.setDaemon(true);
         worker.start();
-    }
-
-    /** 窗口重新获得焦点时重新读取系统配色，只在「跟随系统」模式下生效。 */
-    private void followSystemThemeOnFocus() {
-        sceneProperty().addListener((observable, oldScene, newScene) -> {
-            if (newScene == null) {
-                return;
-            }
-            newScene.windowProperty().addListener((windowObservable, oldWindow, newWindow) -> {
-                if (newWindow == null) {
-                    return;
-                }
-                newWindow.focusedProperty().addListener((focusObservable, wasFocused, focused) -> {
-                    if (focused) {
-                        ThemeManager.refreshFromSystem();
-                    }
-                });
-            });
-        });
     }
 
     // ---------------------------------------------------------------- 侧边栏
