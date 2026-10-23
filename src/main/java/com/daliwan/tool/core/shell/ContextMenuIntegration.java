@@ -28,14 +28,14 @@ import java.util.concurrent.TimeUnit;
  * 展开后才是具体动作——PDF 上四项（转 Word / 转 Excel / 转 PPT / 提取文本），
  * Office 文件上一项（转 PDF）。一个类型能转的格式越多，越不该把它们平铺在右键上。
  *
- * <p>级联菜单在 Windows 上有两种写法，各有一半机器只认其中一种，所以两种都写：
- * <ol>
- *   <li>{@code SubCommands} 置空 + 父键自带 {@code Shell} 子键：全部落在 HKCU 内，
- *       不需要管理员，也是这里的主写法；</li>
- *   <li>{@code ExtendedSubCommandsKey} 指向 {@code Software\Classes\DaliwanMenu\<扩展名>}
- *       这个集中键：老式写法，同样只要 HKCU。</li>
- * </ol>
- * 两套指向同一批命令，资源管理器认哪套都能展开出一样的子菜单。
+ * <p>级联菜单走 {@code SubCommands} 这一种写法：父键的 {@code SubCommands} 置空串，
+ * 具体动作放在父键自己的 {@code Shell} 子键下——全部落在 HKCU 内，不需要管理员权限，
+ * 键也跟文件类型绑在一起，卸载时整棵删掉即可。
+ *
+ * <p>早年为了兼容，同一批命令还额外写了一份到 {@code Software\Classes\Daliwan\<扩展名>}
+ * 这个集中键（{@code ExtendedSubCommandsKey} 写法）。两套都写会重复：资源管理器
+ * 既枚举父键的 {@code Shell}，又枚举集中键，子菜单里每项出现两次。
+ * 现在只保留 {@code SubCommands} 这一套，集中键留给卸载时清理旧机器的残留。
  *
  * <p>写注册表优先走 PowerShell：一次进程调用就能写完十几种扩展名，中文菜单名不受
  * 控制台代码页影响，还能顺手调用 {@code SHChangeNotify} 让资源管理器立刻刷新缓存。
@@ -86,8 +86,10 @@ public final class ContextMenuIntegration {
     public static final String MENU_KEY = "Daliwan";
 
     /**
-     * 二级命令的集中存放处（{@code ExtendedSubCommandsKey} 指向它），按扩展名分目录，
-     * 这样 .pdf 的子菜单里不会出现「转 PDF」这种没意义的项。
+     * 旧版二级命令的集中存放处（{@code ExtendedSubCommandsKey} 指向它），按扩展名分目录。
+     *
+     * <p>现在不再往这里写任何东西——只写一份（父键 {@code Shell} 子键）才不会让
+     * 资源管理器把同一批命令枚举两遍。保留这个常量是为了卸载时能清掉旧版残留。
      */
     public static final String CASCADE_ROOT = "DaliwanMenu";
 
@@ -152,7 +154,11 @@ public final class ContextMenuIntegration {
         return MENU_TITLE + " · " + verb.menuText();
     }
 
-    /** 集中键里同一项的路径（{@code ExtendedSubCommandsKey} 用）。 */
+    /**
+     * 旧版集中键里同一项的路径（{@code ExtendedSubCommandsKey} 用过它）。
+     *
+     * <p>现在安装时不再写这里，只留下路径供卸载清理与排查旧机器残留时对照。
+     */
     public static String storeKeyPath(MenuVerb verb, String extension) {
         return "HKEY_CURRENT_USER\\Software\\Classes\\" + CASCADE_ROOT + "\\"
                 + normalize(extension) + "\\shell\\" + verb.key();
@@ -257,34 +263,24 @@ public final class ContextMenuIntegration {
             script.append("$rk = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($rel, $true)\r\n");
             script.append("if ($rk -ne $null) { $rk.DeleteValue(\"\", $false); $rk.Close() }\r\n");
             appendValue(script, "$base", "MUIVerb", psString(MENU_TITLE));
-            // 空串是关键：告诉资源管理器「这是个子菜单，命令在下面自己找」
+            // 空串是关键：告诉资源管理器「这是个子菜单，命令在下面的 Shell 子键里找」。
+            // 命令只写这一处——另写一份到集中键会让每项在子菜单里出现两次
             appendValue(script, "$base", "SubCommands", "''");
-            // 相对 HKCR 的路径：HKCR 是 HKCU/HKLM 的 Classes 合并视图，
-            // 不能再带 Software\Classes 前缀，否则指向一个不存在的键
-            appendValue(script, "$base", "ExtendedSubCommandsKey",
-                    psString(CASCADE_ROOT + "\\" + extension));
             appendValue(script, "$base", "MultiSelectModel", "'Document'");
             if (withIcon) {
                 appendValue(script, "$base", "Icon", psString(icon));
             }
             for (MenuVerb verb : entry.getValue()) {
-                String sub = "\"$base\\Shell\\" + verb.key() + "\"";
-                String store = "\"HKCU:\\Software\\Classes\\" + CASCADE_ROOT
-                        + "\\$ext\\shell\\" + verb.key() + "\"";
-                // 两套写法各写一份：父键下的 Shell 子键 + ExtendedSubCommandsKey 指向的集中键
-                for (String target : List.of(sub, store)) {
-                    script.append("$item = ").append(target).append("\r\n");
-                    script.append("if (-not (Test-Path $item)) { New-Item -Path $item -Force | Out-Null }\r\n");
-                    appendValue(script, "$item", "(default)", psString(verb.menuText()));
-                    appendValue(script, "$item", "MultiSelectModel", "'Document'");
-                    if (withIcon) {
-                        appendValue(script, "$item", "Icon", psString(icon));
-                    }
-                    script.append("$run = \"$item\\command\"\r\n");
-                    script.append("if (-not (Test-Path $run)) { New-Item -Path $run -Force | Out-Null }\r\n");
-                    appendValue(script, "$run", "(default)",
-                            psString(commandValue(verb, quotedPrefix)));
+                script.append("$item = \"$base\\Shell\\").append(verb.key()).append("\"\r\n");
+                script.append("if (-not (Test-Path $item)) { New-Item -Path $item -Force | Out-Null }\r\n");
+                appendValue(script, "$item", "(default)", psString(verb.menuText()));
+                appendValue(script, "$item", "MultiSelectModel", "'Document'");
+                if (withIcon) {
+                    appendValue(script, "$item", "Icon", psString(icon));
                 }
+                script.append("$run = \"$item\\command\"\r\n");
+                script.append("if (-not (Test-Path $run)) { New-Item -Path $run -Force | Out-Null }\r\n");
+                appendValue(script, "$run", "(default)", psString(commandValue(verb, quotedPrefix)));
             }
         }
         script.append(notifySnippet());
@@ -442,25 +438,23 @@ public final class ContextMenuIntegration {
             reg.append("@=\"\"\r\n");
             reg.append("\"MUIVerb\"=\"").append(escape(MENU_TITLE)).append("\"\r\n");
             reg.append("\"SubCommands\"=\"\"\r\n");
-            reg.append("\"ExtendedSubCommandsKey\"=\"")
-                    .append(escape(CASCADE_ROOT + "\\" + extension)).append("\"\r\n");
             reg.append("\"MultiSelectModel\"=\"Document\"\r\n");
             if (withIcon) {
                 reg.append("\"Icon\"=\"").append(escape(icon)).append("\"\r\n");
             }
             reg.append("\r\n");
             for (MenuVerb verb : entry.getValue()) {
-                for (String key : List.of(childKeyPath(verb, extension), storeKeyPath(verb, extension))) {
-                    reg.append('[').append(key).append("]\r\n");
-                    reg.append("@=\"").append(escape(verb.menuText())).append("\"\r\n");
-                    reg.append("\"MultiSelectModel\"=\"Document\"\r\n");
-                    if (withIcon) {
-                        reg.append("\"Icon\"=\"").append(escape(icon)).append("\"\r\n");
-                    }
-                    reg.append('[').append(key).append("\\command]\r\n");
-                    reg.append("@=\"").append(escape(commandValue(verb, quotedPrefix)))
-                            .append("\"\r\n\r\n");
+                // 只写父键 Shell 子键这一处：另一份集中键会让子菜单每项重复一次
+                String key = childKeyPath(verb, extension);
+                reg.append('[').append(key).append("]\r\n");
+                reg.append("@=\"").append(escape(verb.menuText())).append("\"\r\n");
+                reg.append("\"MultiSelectModel\"=\"Document\"\r\n");
+                if (withIcon) {
+                    reg.append("\"Icon\"=\"").append(escape(icon)).append("\"\r\n");
                 }
+                reg.append('[').append(key).append("\\command]\r\n");
+                reg.append("@=\"").append(escape(commandValue(verb, quotedPrefix)))
+                        .append("\"\r\n\r\n");
             }
         }
         return reg.toString();

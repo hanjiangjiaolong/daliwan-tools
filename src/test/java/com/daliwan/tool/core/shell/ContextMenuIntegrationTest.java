@@ -44,7 +44,7 @@ class ContextMenuIntegrationTest {
     }
 
     @Test
-    @DisplayName("集中键按扩展名分开，避免 .pdf 上出现「转 PDF」这种没意义的项")
+    @DisplayName("旧版集中键的路径留着卸载时对照用")
     void storeKeyIsPerExtension() {
         assertEquals("HKEY_CURRENT_USER\\Software\\Classes\\DaliwanMenu\\.pdf\\shell\\DaliwanPdfToText",
                 ContextMenuIntegration.storeKeyPath(ContextMenuIntegration.PDF_TO_OFFICE.get(3), ".pdf"));
@@ -136,9 +136,8 @@ class ContextMenuIntegrationTest {
         assertTrue(script.contains("[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey"),
                 "只能用 .NET 接口删默认值，Remove-ItemProperty 删不掉");
         assertTrue(script.contains("'SubCommands' -Value ''"), "SubCommands 置空才是子菜单");
-        assertTrue(script.contains("'ExtendedSubCommandsKey'"));
-        // 相对 HKCR 的路径（单引号里不插值，所以直接写扩展名），不能带 Software\Classes 前缀
-        assertTrue(script.contains("'DaliwanMenu\\.pdf'"));
+        assertFalse(script.contains("'ExtendedSubCommandsKey'"),
+                "再写一份集中键，资源管理器会把同一批命令枚举两遍，子菜单里每项重复一次");
         assertFalse(script.contains("'Software\\Classes\\DaliwanMenu"));
         assertTrue(script.contains("SHChangeNotify"));
         assertTrue(script.contains("'MultiSelectModel'"));
@@ -213,14 +212,17 @@ class ContextMenuIntegrationTest {
     }
 
     @Test
-    @DisplayName("二级菜单两套写法都写：父键 Shell 子键 + 集中键")
-    void writesBothCascadeFlavours() {
+    @DisplayName("二级菜单只写父键 Shell 子键一份，避免子菜单重复")
+    void writesOnlyOneCascadeFlavour() {
         String script = ContextMenuIntegration.installScript(
                 ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
 
         assertTrue(script.contains("$item = \"$base\\Shell\\DaliwanPdfToWord\""));
-        assertTrue(script.contains("$item = \"HKCU:\\Software\\Classes\\DaliwanMenu\\$ext"
-                + "\\shell\\DaliwanPdfToWord\""));
+        assertFalse(script.contains("HKCU:\\Software\\Classes\\DaliwanMenu\\$ext"),
+                "集中键不再写入：两套并存会让子菜单每项出现两次");
+        // 每个动作只建一次键
+        assertEquals(4, countOccurrences(script, "$item = \"$base\\Shell\\"));
+        assertEquals(4, countOccurrences(script, "$run = \"$item\\command\""));
     }
 
     @Test
@@ -259,13 +261,12 @@ class ContextMenuIntegrationTest {
                 + "\\shell\\Daliwan]"));
         assertTrue(reg.contains("\"MUIVerb\"=\"大力丸\""));
         assertTrue(reg.contains("\"SubCommands\"=\"\""));
-        assertTrue(reg.contains("\"ExtendedSubCommandsKey\"=\"DaliwanMenu\\\\.pdf\""));
+        assertFalse(reg.contains("\"ExtendedSubCommandsKey\""), "集中键不再写入，避免子菜单重复");
         assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.pdf"
                 + "\\shell\\Daliwan]\r\n@=\"\""), "父键默认值为空，否则不会展开子菜单");
         assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations\\.pdf"
                 + "\\shell\\Daliwan\\Shell\\DaliwanPdfToWord\\command]"));
-        assertTrue(reg.contains("[HKEY_CURRENT_USER\\Software\\Classes\\DaliwanMenu\\.pdf"
-                + "\\shell\\DaliwanPdfToWord\\command]"));
+        assertFalse(reg.contains("DaliwanMenu"), "reg 兜底也不再写集中键");
     }
 
     @Test
