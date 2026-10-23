@@ -33,10 +33,16 @@ public class CellShot {
     private static final String CELL = "{\"team\":\"数据组\",\"city\":\"北京\",\"roles\":[],"
             + "\"ext\":{\"level\":3,\"note\":\"试用期，暂不开通生产权限\"}}";
 
+    /** 超长单行且语法不完整：验证「着色暂停」的提示分支。 */
+    private static final String CELL_LONG =
+            "{\"note\":\"" + "很长的一行。".repeat(4000) + "\"";
+
     private static final Object LOCK = new Object();
 
     public static void main(String[] args) {
         String theme = args.length > 0 ? args[0] : "dark";
+        String mode = args.length > 1 ? args[1] : "normal";
+        String cell = "long".equals(mode) ? CELL_LONG : CELL;
         SystemTheme.remember(theme);
         // 不走 Application.launch：fat jar / classpath 模式下它会检查模块路径并报
         // 「缺少 JavaFX 运行时组件」。Platform.startup 直接起工具包即可。
@@ -60,13 +66,14 @@ public class CellShot {
                 sleep(900);
                 Platform.runLater(() -> {
                     save(scene.getRoot(), "build/verify/json-table-" + theme + ".png");
-                    CellDetailDialog.show(stage, "profile", "2", CELL);
+                    CellDetailDialog.show(stage, "profile", "2", cell);
                 });
                 sleep(1400);
                 Platform.runLater(() -> {
                     for (Window window : Window.getWindows()) {
                         if (window instanceof Stage dialog && "单元格内容".equals(dialog.getTitle())) {
-                            save(dialog.getScene().getRoot(), "build/verify/cell-detail-" + theme + ".png");
+                            save(dialog.getScene().getRoot(),
+                                    "build/verify/cell-detail-" + theme + "-" + mode + ".png");
                         }
                     }
                     synchronized (LOCK) {

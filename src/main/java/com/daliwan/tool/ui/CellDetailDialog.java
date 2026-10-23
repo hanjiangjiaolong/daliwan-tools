@@ -11,7 +11,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
@@ -28,7 +27,8 @@ import javafx.util.Duration;
  *
  * <p>表格列宽有限，长文本会被截断成一行省略号——嵌套的对象 / 数组还原成 JSON 后
  * 动辄几百字符，光看表格根本读不全。双击单元格弹出这个窗口，内容照原样铺开：
- * 能滚动、能复制，看着像 JSON 的还会默认格式化好（一键切回原始串）。
+ * 复用编辑器的 {@link JsonCodeArea}，行号与语法着色跟主界面一致，能滚动、能复制，
+ * 看着像 JSON 的还会默认格式化好（一键切回原始串）。
  *
  * <p>刻意做成<b>非模态</b>：看一个单元格时往往还要对照别的行，模态窗口会把主界面
  * 锁住，只能关了再看下一个。非模态下双击另一个单元格，这里的内容就地换掉。
@@ -38,7 +38,7 @@ import javafx.util.Duration;
  */
 public final class CellDetailDialog {
 
-    /** 展示的字符上限：再大的文本 TextArea 布局会明显卡住，超出部分截断并说明。 */
+    /** 展示的字符上限：再大的文本一次铺进去布局会明显卡住，超出部分截断并说明。 */
     static final int MAX_CHARS = 200_000;
 
     private static final IndentStyle INDENT = IndentStyle.TWO_SPACES;
@@ -48,7 +48,8 @@ public final class CellDetailDialog {
 
     private final Stage stage = new Stage();
     private final Label meta = new Label();
-    private final TextArea area = UiKit.monoArea("", true, true);
+    private final JsonCodeArea area = new JsonCodeArea(false);
+    private final Label highlightNote = new Label();
     private final Button prettyButton = new Button("查看原始");
     private final Button copyButton = new Button("复制");
 
@@ -71,9 +72,11 @@ public final class CellDetailDialog {
         VBox.setVgrow(area, Priority.ALWAYS);
         area.setMinHeight(180);
         // 换行默认开：单元格里最常见的是一整串紧凑 JSON，不换行得一直横向拖
+        area.codeArea().setWrapText(true);
         CheckBox wrap = new CheckBox("自动换行");
         wrap.setSelected(true);
-        wrap.selectedProperty().addListener((observable, wasOn, on) -> area.setWrapText(on));
+        wrap.selectedProperty().addListener(
+                (observable, wasOn, on) -> area.codeArea().setWrapText(on));
 
         prettyButton.getStyleClass().add("ghost-button");
         prettyButton.setFocusTraversable(false);
@@ -92,7 +95,12 @@ public final class CellDetailDialog {
         HBox areaBar = new HBox(8, wrap, cardGap, prettyButton);
         areaBar.setAlignment(Pos.CENTER_LEFT);
 
-        VBox card = new VBox(8, area, areaBar);
+        // 一整行的长串着色会被 JsonCodeArea 主动停掉（再算一次要几秒），这里说明原因并指条路
+        highlightNote.getStyleClass().add("hint");
+        highlightNote.setVisible(false);
+        highlightNote.setManaged(false);
+
+        VBox card = new VBox(8, area, highlightNote, areaBar);
         card.getStyleClass().add("card");
         VBox.setVgrow(card, Priority.ALWAYS);
 
@@ -188,7 +196,16 @@ public final class CellDetailDialog {
     private void refreshText() {
         String shown = showPretty && prettyText != null ? prettyText : raw;
         area.setText(clip(shown));
-        area.positionCaret(0);
+        area.codeArea().moveTo(0);
+        area.codeArea().requestFollowCaret();
+        boolean paused = area.isHighlightPaused();
+        if (paused) {
+            highlightNote.setText(prettyText != null
+                    ? "这一格是没换行的长串，着色已暂停；点「格式化」后恢复"
+                    : "这一格是一整行长串，着色已暂停");
+        }
+        highlightNote.setVisible(paused);
+        highlightNote.setManaged(paused);
     }
 
     /** 复制当前看到的内容（格式化后的或原始串），并给出「已复制」反馈。 */
