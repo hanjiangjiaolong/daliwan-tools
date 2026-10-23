@@ -145,18 +145,42 @@ class ContextMenuIntegrationTest {
     }
 
     @Test
-    @DisplayName("旧版平铺的键在安装时先清掉，避免右键里出现两套菜单")
-    void installScriptCleansLegacyFlatKeys() {
+    @DisplayName("收成二级时先把平铺键清掉，避免右键里出现两套菜单")
+    void installScriptCleansFlatKeysWhenCascading() {
         String script = ContextMenuIntegration.installScript(
                 ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
 
-        assertTrue(script.contains("$old = \"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext"
-                + "\\shell\\DaliwanToPdf\""));
-        assertTrue(script.contains("$old = \"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext"
-                + "\\shell\\DaliwanPdfToWord\""));
-        assertTrue(script.indexOf("$old") < script.indexOf("$base = \"HKCU:\\Software\\Classes"
+        assertTrue(script.contains("$old = @('DaliwanToPdf','DaliwanPdfToWord'"),
+                "升级上来的平铺键要在写入二级菜单之前清掉");
+        assertTrue(script.contains("$p = \"HKCU:\\Software\\Classes\\SystemFileAssociations"
+                + "\\$ext\\shell\\$k\""));
+        assertTrue(script.indexOf("$old = @(") < script.indexOf("$base = \"HKCU:\\Software\\Classes"
                 + "\\SystemFileAssociations\\$ext\\shell\\Daliwan\""),
                 "清理必须发生在写入之前");
+    }
+
+    @Test
+    @DisplayName("平铺时不删自己的键，也不碰别的扩展名")
+    void installScriptKeepsOwnFlatKey() {
+        String script = ContextMenuIntegration.installScript(
+                List.of(ContextMenuIntegration.TO_PDF), PREFIX, ICON, true);
+
+        assertFalse(script.contains("$old = @('DaliwanToPdf'"),
+                "平铺形态下 DaliwanToPdf 正是要写的键，不能当成旧键删掉");
+        assertTrue(script.contains("$old = @('DaliwanPdfToWord'"),
+                "同扩展名上其它动作的残留仍然要清");
+    }
+
+    @Test
+    @DisplayName("装 PDF 组不会顺手删掉 Office 组的平铺键")
+    void installingPdfGroupLeavesOfficeGroupAlone() {
+        String script = ContextMenuIntegration.installScript(
+                ContextMenuIntegration.PDF_TO_OFFICE, PREFIX, ICON, true);
+
+        // 两个开关是分开安装的：PDF 组只处理 .pdf，不能遍历到 .xlsx / .docx 上去
+        assertFalse(script.contains("'.xlsx'"), "安装 PDF 组时不该出现 Office 扩展名");
+        assertFalse(script.contains("'.docx'"), "安装 PDF 组时不该出现 Office 扩展名");
+        assertTrue(script.contains("'.pdf'"));
     }
 
     @Test

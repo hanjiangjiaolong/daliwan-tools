@@ -228,18 +228,20 @@ public final class ContextMenuIntegration {
                                 String icon, boolean withIcon) {
         StringBuilder script = new StringBuilder();
         script.append("$ErrorActionPreference = 'Stop'\r\n");
-        script.append(legacyCleanup());
         for (Map.Entry<String, List<MenuVerb>> entry : groupByExtension(verbs).entrySet()) {
             String extension = entry.getKey();
             List<MenuVerb> items = entry.getValue();
             script.append("$ext = ").append(psString(extension)).append("\r\n");
             if (items.size() == 1) {
                 // 只有一项就平铺：点一下直接干，不用先展开
+                // 只清掉与本次形态冲突的键——千万别顺手删掉别的开关刚写进去的项
                 script.append(removeCascadeSnippet());
+                script.append(removeFlatSnippet(obsoleteVerbs(items)));
                 appendFlatItem(script, items.get(0), quotedPrefix, icon, withIcon);
                 continue;
             }
-            // 多项才收成二级：右键里只留一个「大力丸」入口
+            // 多项才收成二级：右键里只留一个「大力丸」入口，平铺形态的项先清干净
+            script.append(removeFlatSnippet(ALL));
             String base = "\"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext\\shell\\"
                     + MENU_KEY + "\"";
             script.append("$base = ").append(base).append("\r\n");
@@ -312,10 +314,50 @@ public final class ContextMenuIntegration {
     }
 
     /**
-     * 清理旧版平铺在右键上的键。
+     * 清理平铺形态的菜单项。
+     *
+     * <p>只在它们与本次形态冲突时调用：本次要收成子菜单，平铺的项就必须先删掉，
+     * 否则右键里会同时出现「大力丸 · 转 PDF」和「大力丸」两套入口。
+     * 反过来本次就是平铺时，自己要写的那个键绝不能出现在清单里。
+     */
+    private static String removeFlatSnippet(Collection<MenuVerb> obsolete) {
+        if (obsolete.isEmpty()) {
+            return "";
+        }
+        List<String> keys = new ArrayList<>();
+        for (MenuVerb verb : ALL) {
+            if (obsolete.stream().anyMatch(item -> item.key().equals(verb.key()))) {
+                keys.add(verb.key());
+            }
+        }
+        StringBuilder script = new StringBuilder();
+        script.append("$old = ").append(psArray(keys)).append("\r\n");
+        script.append("foreach ($k in $old) {\r\n");
+        script.append("  $p = \"HKCU:\\Software\\Classes\\SystemFileAssociations\\$ext\\shell\\$k\"\r\n");
+        script.append("  if (Test-Path $p) { Remove-Item -Path $p -Recurse -Force }\r\n");
+        script.append("}\r\n");
+        return script.toString();
+    }
+
+    /** 本次不写的那些菜单项（平铺形态下，同扩展名上除自己以外的键都算残留）。 */
+    private static List<MenuVerb> obsoleteVerbs(List<MenuVerb> items) {
+        List<MenuVerb> obsolete = new ArrayList<>();
+        for (MenuVerb verb : ALL) {
+            if (items.stream().noneMatch(item -> item.key().equals(verb.key()))) {
+                obsolete.add(verb);
+            }
+        }
+        return obsolete;
+    }
+
+    /**
+     * 清理平铺在右键上的键。
      *
      * <p>老版本把每个动作直接挂在 {@code shell\DaliwanToPdf} 这一层，升级后如果不清，
      * 右键里就会同时出现「大力丸 · 转 PDF」和新的「大力丸」子菜单。
+     *
+     * <p>只在<b>卸载</b>时全量调用：卸载是要把本程序写的东西全清掉，多多益善。
+     * 安装时不能这么干——两个开关是分开安装的，全量清理会把另一个开关刚写好的项删掉。
      */
     private static String legacyCleanup() {
         StringBuilder script = new StringBuilder();
