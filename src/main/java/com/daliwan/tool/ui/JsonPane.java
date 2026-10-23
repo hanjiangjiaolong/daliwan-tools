@@ -17,16 +17,20 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -38,6 +42,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import javafx.util.Duration;
 
 import java.io.File;
@@ -65,6 +70,12 @@ public class JsonPane extends VBox {
 
     private static final long DROP_FILE_LIMIT = 8L * 1024 * 1024;
 
+    /** 单元格文本多长才给悬停提示——短文本一眼看得全，弹提示反而是打扰。 */
+    private static final int TOOLTIP_FROM = 24;
+
+    /** 悬停提示里最多预览多少字符，完整内容在双击弹出的窗口里。 */
+    private static final int TOOLTIP_LIMIT = 300;
+
     private static final String SAMPLE = """
             {"code":0,"message":"ok","data":{"total":2,"page":1,"list":[\
             {"id":1001,"name":"张三","tags":["admin","dev"],"active":true,"score":98.5,"remark":null},\
@@ -84,6 +95,9 @@ public class JsonPane extends VBox {
     private final TableView<ObservableList<String>> tableView = new TableView<>();
     private final Label tablePlaceholder = new Label();
     private final Label statusLabel = new Label();
+
+    /** 工具栏左侧的一句话提示，随视图切换（表格视图里提示怎么看长单元格）。 */
+    private final Label toolbarHint = new Label("粘贴或拖入 JSON");
 
     /** 着色被停掉时的提示——一整行的超大 JSON 上色会把界面卡死，得说明为什么没颜色。 */
     private final Label highlightNote = new Label();
@@ -174,8 +188,7 @@ public class JsonPane extends VBox {
     // ---------------------------------------------------------------- 布局
 
     private HBox buildToolbar() {
-        Label hint = new Label("粘贴或拖入 JSON");
-        hint.getStyleClass().add("hint");
+        toolbarHint.getStyleClass().add("hint");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -215,7 +228,7 @@ public class JsonPane extends VBox {
         clearButton.getStyleClass().add("ghost-button");
         clearButton.setOnAction(e -> clearAll());
 
-        HBox bar = new HBox(8, hint, spacer, textToggle, treeToggle, tableToggle,
+        HBox bar = new HBox(8, toolbarHint, spacer, textToggle, treeToggle, tableToggle,
                 indentLabel, indentBox, formatButton, minifyButton,
                 expandButton, collapseButton, sampleButton, clearButton);
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -683,6 +696,10 @@ public class JsonPane extends VBox {
         exportButton.setVisible(table);
         exportButton.setManaged(table);
         exportButton.setDisable(table && currentTable == null);
+
+        // 表格里的单元格是被列宽截断的，得告诉用户还有完整内容可看
+        toolbarHint.setText(table ? "双击单元格查看完整内容" : "粘贴或拖入 JSON");
+
         syncSourceBar();
         updateHighlightNote();
 
@@ -1063,6 +1080,7 @@ public class JsonPane extends VBox {
             column.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
                     cellIndex < cell.getValue().size() ? cell.getValue().get(cellIndex) : ""));
             column.setPrefWidth(140);
+            column.setCellFactory(col -> new JsonTableCell());
             tableView.getColumns().add(column);
         }
 
@@ -1090,6 +1108,80 @@ public class JsonPane extends VBox {
         }
         message.append(sourceSuffix(candidateCount));
         setStatus(message.toString(), false);
+    }
+
+    /**
+     * 表格单元格：内容超长时截断成省略号，双击 / 右键看完整内容。
+     *
+     * <p>嵌套的对象与数组是还原成紧凑 JSON 放进一格里的（见 {@link JsonTable}），
+     * 几百个字符在 140px 的列宽里连零头都显示不出来，只能靠弹窗补上。
+     * 悬停先给一段预览提示，双击才开窗——单击仍然是选中行，不至于看谁都弹一下。
+     *
+     * <p>行号从行数据的第 0 格取（{@link #fillTable} 放进去的），
+     * 不用 {@code getIndex()}：排序后下标指的是排序后的视图位置，不是原来那一行。
+     */
+    private final class JsonTableCell extends TableCell<ObservableList<String>, String> {
+
+        private JsonTableCell() {
+            setTextOverrun(OverrunStyle.ELLIPSIS);
+            setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !isEmpty()) {
+                    openDetail();
+                }
+            });
+            setOnKeyPressed(event -> {
+                if (!isEmpty() && (event.getCode() == KeyCode.ENTER
+                        || event.getCode() == KeyCode.SPACE)) {
+                    openDetail();
+                }
+            });
+            setContextMenu(buildCellMenu());
+        }
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setText(null);
+                setTooltip(null);
+                return;
+            }
+            setText(item);
+            setTooltip(item.length() >= TOOLTIP_FROM ? new Tooltip(previewOf(item)) : null);
+        }
+
+        /** 右键菜单：看完整内容与复制，不必为了复制先进弹窗。 */
+        private ContextMenu buildCellMenu() {
+            MenuItem view = new MenuItem("查看完整内容");
+            view.setOnAction(event -> openDetail());
+            MenuItem copy = new MenuItem("复制此单元格");
+            copy.setOnAction(event -> {
+                String value = getItem();
+                if (value != null && !value.isEmpty()) {
+                    ClipboardUtil.copy(value);
+                }
+            });
+            return new ContextMenu(view, copy);
+        }
+
+        private void openDetail() {
+            String value = getItem();
+            if (value == null || value.isEmpty()) {
+                return;
+            }
+            ObservableList<String> row = getTableRow() == null ? null : getTableRow().getItem();
+            String rowNumber = row == null || row.isEmpty() ? "-" : row.get(0);
+            TableColumn<ObservableList<String>, String> column = getTableColumn();
+            String columnName = column == null ? "" : column.getText();
+            Scene scene = getTableView() == null ? null : getTableView().getScene();
+            Window owner = scene == null ? null : scene.getWindow();
+            CellDetailDialog.show(owner, columnName, rowNumber, value);
+        }
+    }
+
+    /** 悬停提示的预览文本：完整内容交给弹窗，这里只给个能认出来的开头。 */
+    private static String previewOf(String text) {
+        return text.length() > TOOLTIP_LIMIT ? text.substring(0, TOOLTIP_LIMIT) + "…" : text;
     }
 
     /** 状态栏用的来源说明：表格取的是哪一段数组，以及还能换几处。 */
