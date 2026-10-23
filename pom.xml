@@ -76,6 +76,16 @@
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
             <version>${zxing.version}</version>
+            <exclusions>
+                <!--
+                    jai-imageio-core 只为 TIFF / JPEG2000 等格式补 ImageIO 实现（约 0.5 MB），
+                    这里只生成与识别 PNG，实测排除后二维码读写不受影响。
+                -->
+                <exclusion>
+                    <groupId>com.github.jai-imageio</groupId>
+                    <artifactId>jai-imageio-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!--
@@ -98,6 +108,16 @@
             <groupId>com.stirling</groupId>
             <artifactId>stirling-office-convert-topdf</artifactId>
             <version>${stirling.version}</version>
+            <exclusions>
+                <!--
+                    commons-math3 是 POI 的可选依赖（1.8 MB），只有统计回归那类接口用到，
+                    Office → PDF 的读写路径实测不碰它，排除后转换结果一致。
+                -->
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-math3</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!--
@@ -109,6 +129,12 @@
             <groupId>com.stirling</groupId>
             <artifactId>stirling-office-convert</artifactId>
             <version>${stirling.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-math3</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!--
@@ -145,6 +171,10 @@
                 <exclusion>
                     <groupId>org.ehcache</groupId>
                     <artifactId>ehcache</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-math3</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

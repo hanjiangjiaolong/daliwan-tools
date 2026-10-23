@@ -43,18 +43,4 @@ public final class PdfMerger {
         }
     }
 
-    /**
-     * 合并后总页数，用于结果提示。
-     */
-    public int totalPages(List<Path> inputs) {
-        int total = 0;
-        for (Path input : inputs) {
-            try {
-                total += PdfSplitter.pageCount(input);
-            } catch (ConversionException ignored) {
-                // 单个文件读不到时跳过，不影响其它文件的统计
-            }
-        }
-        return total;
-    }
 }

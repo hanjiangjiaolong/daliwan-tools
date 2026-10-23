@@ -91,9 +91,11 @@ REM   jdk.unsupported    Unsafe（fesod 的 cglib、JavaFX 都用）
 
 REM   jdk.localedata     配合 --include-locales=zh,en：全部语言包约 30MB，只留中英文约 2MB
 
+REM 去掉的两个：java.naming（JNDI）与 jdk.zipfs（zip 当文件系统用）——jdeps 没要求，
+REM 实际转换冒烟（Office → PDF、PDF → 四种 Office、xlsx 写出）也不需要它们。
 REM 不用 java.se 聚合模块：它会连带拉进 java.rmi / java.net.http / java.instrument 等用不到的东西
 
-"%JDK%\bin\jlink.exe" --add-modules java.base,java.desktop,java.logging,java.xml,java.datatransfer,java.prefs,java.management,java.sql,java.sql.rowset,java.naming,java.security.jgss,java.xml.crypto,jdk.charsets,jdk.unsupported,jdk.crypto.ec,jdk.localedata,jdk.zipfs ^
+"%JDK%\bin\jlink.exe" --add-modules java.base,java.desktop,java.logging,java.xml,java.datatransfer,java.prefs,java.management,java.sql,java.sql.rowset,java.security.jgss,java.xml.crypto,jdk.charsets,jdk.unsupported,jdk.crypto.ec,jdk.localedata ^
     --include-locales=zh,en --compress=2 ^
     --output target\runtime --strip-debug --no-header-files --no-man-pages
 

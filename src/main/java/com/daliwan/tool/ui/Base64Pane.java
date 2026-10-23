@@ -115,8 +115,7 @@ public class Base64Pane extends VBox {
             }
         });
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         // 模式切换固定在最左侧：图片模式下字符集那组控件会隐藏，若把切换放在它们右边，
         // 位置会跟着往右跳。
@@ -138,8 +137,7 @@ public class Base64Pane extends VBox {
 
         statusLabel.getStyleClass().add("status");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button copyButton = UiKit.copyButton("复制结果", () -> output.getText());
 

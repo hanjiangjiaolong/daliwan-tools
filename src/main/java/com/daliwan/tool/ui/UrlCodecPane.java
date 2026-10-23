@@ -66,8 +66,7 @@ public class UrlCodecPane extends VBox {
         charsetBox.setValue(StandardCharsets.UTF_8);
         charsetBox.getStyleClass().add("indent-box");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button clearButton = new Button("清空");
         clearButton.getStyleClass().add("ghost-button");
@@ -94,8 +93,7 @@ public class UrlCodecPane extends VBox {
 
         statusLabel.getStyleClass().add("status");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button copyButton = UiKit.copyButton("复制结果", () -> output.getText());
 

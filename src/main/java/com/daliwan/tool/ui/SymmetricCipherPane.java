@@ -78,8 +78,7 @@ public class SymmetricCipherPane extends VBox {
         encodingBox.setValue(SymmetricCipher.Encoding.BASE64);
         encodingBox.getStyleClass().add("indent-box");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button clearButton = new Button("清空");
         clearButton.getStyleClass().add("ghost-button");
@@ -158,8 +157,7 @@ public class SymmetricCipherPane extends VBox {
 
         statusLabel.getStyleClass().add("status");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button copyButton = UiKit.copyButton("复制结果", () -> output.getText());
 

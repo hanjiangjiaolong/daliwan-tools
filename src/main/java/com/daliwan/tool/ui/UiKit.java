@@ -43,6 +43,13 @@ public final class UiKit {
         return box;
     }
 
+    /** 卡片内的小标题，样式在各主题里统一定义。 */
+    public static Label cardTitle(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("card-title");
+        return label;
+    }
+
     /** 等宽字体文本域，默认不折行（长行横向滚动，便于看对齐的结构化文本）。 */
     public static TextArea monoArea(String prompt, boolean readOnly) {
         return monoArea(prompt, readOnly, false);
@@ -160,7 +167,8 @@ public final class UiKit {
         }
     }
 
-    private static Window ownerWindow(Node owner) {
+    /** 取节点所属窗口，用于给文件对话框定位；节点还没挂到场景上时返回 {@code null}。 */
+    public static Window ownerWindow(Node owner) {
         Scene scene = owner == null ? null : owner.getScene();
         return scene == null ? null : scene.getWindow();
     }
@@ -255,7 +263,7 @@ public final class UiKit {
     /**
      * 拖拽过程的计时统计：只在放下时往日志文件追加一行，用于排查界面卡顿。
      *
-     * <p>{@code overGapMax} 是相邻两次 DRAG_OVER 的最大间隔，它直接反映界面线程
+     * <p>{@code maxGapMillis} 是相邻两次 DRAG_OVER 的最大间隔，它直接反映界面线程
      * 被堵了多久：正常应该是个位数毫秒，出现几百毫秒就说明有活压在界面线程上了。
      */
     private static final class DropStats {

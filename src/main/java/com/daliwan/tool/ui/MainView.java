@@ -537,7 +537,7 @@ public class MainView extends BorderPane {
 
     /** 打开「关于」弹窗；版本、Java、系统这些从这里一键复制给反馈时用。 */
     private void openAbout() {
-        AboutDialog.show(getScene() == null ? null : getScene().getWindow());
+        AboutDialog.show(UiKit.ownerWindow(this));
     }
 
     private void openSettings() {

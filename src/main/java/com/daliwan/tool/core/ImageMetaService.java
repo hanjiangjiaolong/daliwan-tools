@@ -1,5 +1,6 @@
 package com.daliwan.tool.core;
 
+import com.daliwan.tool.util.ByteSizes;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
@@ -273,18 +274,7 @@ public final class ImageMetaService {
 
     /** 人类可读的文件大小。 */
     public static String formatSize(long bytes) {
-        if (bytes < 1024) {
-            return bytes + " B";
-        }
-        double kb = bytes / 1024.0;
-        if (kb < 1024) {
-            return String.format(Locale.ROOT, "%.1f KB", kb);
-        }
-        double mb = kb / 1024.0;
-        if (mb < 1024) {
-            return String.format(Locale.ROOT, "%.2f MB", mb);
-        }
-        return String.format(Locale.ROOT, "%.2f GB", mb / 1024.0);
+        return ByteSizes.format(bytes);
     }
 
     // ---------------------------------------------------------------- 实现

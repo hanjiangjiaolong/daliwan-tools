@@ -94,9 +94,11 @@ daliwan_tool/
     │   │   │   ├── SettingsPane.java      设置页（卡片 + 开关）
     │   │   │   ├── ToggleSwitch.java      自绘开关控件
     │   │   │   ├── ThemeManager.java      主题装配与切换
+    │   │   │   ├── BatchConvertPane.java   批量转换页的公共骨架（列表 / 后台逐个转 / 统计）
     │   │   │   ├── Icons.java             线性图标路径集合
     │   │   │   └── UiKit.java             页面内复用构件
     │   │   └── util/
+    │   │       ├── ByteSizes.java         字节数的人类可读表示
     │   │       ├── ClipboardUtil.java     剪贴板封装
     │   │       └── SystemTheme.java       系统明暗配色探测（结果缓存到 theme.cache）
     │   └── resources/
@@ -222,8 +224,7 @@ CSV 是文本格式，中文 Excel 打开会连踩三个坑：无 BOM 乱码（�
 - JSON 树视图节点上限 20 万个；超过 3000 个节点时「展开全部」只展开三层。
 - 去除元信息对 JPEG / PNG / WebP / GIF 是无损剪裁，对 BMP / TIFF 退回重编码（画质与体积都可能变化）；HEIC / RAW 等需要专门解码器的格式暂不支持，会明确提示先转成 JPEG 或 PNG。结构异常、剪不动的文件同样走重编码兜底，不会把原图改坏。
 - **拖放全程不碰 `getDragboard()`，只在放下那一刻读一次文件列表**：`hasFiles()` 看着像读个布尔值，实际要穿过 JNI 调 Windows 的 `IDataObject::EnumFormatEtc`——拖拽源程序（资源管理器、浏览器、聊天工具）得把数据对象上挂的每一种格式都准备好才能枚举完，拖图片时还会临时拉起缩略图 / 属性处理器这类 Shell 扩展，一次几百毫秒到几秒不等，且**同步阻塞在界面线程上**。`DRAG_OVER` 每秒几十次、`DRAG_ENTERED` 还会随指针穿过子节点反复触发，只要在其中任何一个里问一句 `hasFiles()`，界面就一卡一卡甚至彻底冻住——表现就是「文件刚进窗口就死了」。所有页面统一走 `UiKit.installFileDrop()`：悬停阶段只 `acceptTransferModes`（不跨进程），内容是不是文件等 `DRAG_DROPPED` 再看，不是文件就 `setDropCompleted(false)`。另外高亮状态用场景坐标判断是否真的离开投放区，避免在子节点之间移动时样式反复重算。每次拖拽结束会在 `~/.daliwan/dnd.log` 追加一行：**界面最大间隔**是相邻两次 `DRAG_OVER` 的最大间隔，直接反映界面线程被堵了多久（正常个位数毫秒），排障时先看它。
-- **耗时操作一律走后台**：文件哈希、PDF 拆分/合并、图片转 PDF、二维码识别、文本比对
-  都包进 `Task` 由 `UiKit.runInBackground` 起守护线程，界面线程只负责拿结果刷新；
+- **两个批量转换页共用一套骨架**：「Office 转 PDF」与「PDF 转 Office」的交互完全一样（拖入 / 选择文件 → 后台逐个转 → 行上回显状态 → 结束给统计），只有两点不同：什么样的文件能进列表、单个文件怎么转。这两点由子类的 `rejection(Path)` 与 `convert(Path)` 回答，其余（列表单元格、按钮禁用逻辑、后台任务、统计文案）都收在 `BatchConvertPane` 里——新加一个「批量转换」页面只需要回答这两个问题。每个文件转完只替换列表中那一项来刷新该行，不用 `list.refresh()`（后者会重建所有单元格）。
   输入触发的文本比对还带一个自增 token，输入继续变化时旧结果直接丢弃。
   文本比对另有规模上限（参与比较 6000 行、编辑距离 1500）：Myers 每轮都要留一份
   `int[2*max+1]` 的快照，6000 行差异悬殊的文本能吃到近 300MB，超出上限就退化为

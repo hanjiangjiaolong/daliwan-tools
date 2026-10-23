@@ -215,8 +215,4 @@ public final class ImageBase64Codec {
         };
     }
 
-    /** 是否为受支持的图片类型（供界面给出友好提示）。 */
-    public static boolean isImageMime(String mime) {
-        return mime != null && mime.toLowerCase(Locale.ROOT).startsWith("image/");
-    }
 }

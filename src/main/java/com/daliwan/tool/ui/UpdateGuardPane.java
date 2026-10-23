@@ -107,8 +107,7 @@ public class UpdateGuardPane extends VBox {
     }
 
     private HBox buildActions() {
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
         HBox bar = new HBox(8, blockButton, allowButton, spacer, refreshButton);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;

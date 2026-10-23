@@ -1,5 +1,6 @@
 package com.daliwan.tool.ui;
 
+import com.daliwan.tool.util.ByteSizes;
 import com.daliwan.tool.core.DigestService;
 import com.daliwan.tool.core.HashAlgorithm;
 import com.daliwan.tool.core.HashResult;
@@ -106,8 +107,7 @@ public class HashPane extends VBox {
             refresh();
         });
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button clearButton = new Button("清空");
         clearButton.getStyleClass().add("ghost-button");
@@ -212,7 +212,7 @@ public class HashPane extends VBox {
     private void openFileChooser() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("选择要计算摘要的文件");
-        File selected = chooser.showOpenDialog(getScene() == null ? null : getScene().getWindow());
+        File selected = chooser.showOpenDialog(UiKit.ownerWindow(this));
         if (selected != null) {
             handleFile(selected.toPath());
         }
@@ -233,7 +233,7 @@ public class HashPane extends VBox {
         currentFile = file;
         fileNameLabel.setText(file.getFileName().toString());
         Path parent = file.toAbsolutePath().getParent();
-        fileMetaLabel.setText(formatSize(size) + (parent == null ? "" : " · " + parent));
+        fileMetaLabel.setText(ByteSizes.format(size) + (parent == null ? "" : " · " + parent));
         resultPanel.clear();
         setStatus("正在计算…", false);
 
@@ -274,9 +274,7 @@ public class HashPane extends VBox {
         });
 
         chooseButton.setDisable(true);
-        Thread worker = new Thread(task, "hash-file-worker");
-        worker.setDaemon(true);
-        worker.start();
+        UiKit.runInBackground(task, "hash-file-worker");
     }
 
     private void showError(String message) {
@@ -289,17 +287,4 @@ public class HashPane extends VBox {
         UiKit.setStatus(statusLabel, message, error);
     }
 
-    private static String formatSize(long bytes) {
-        if (bytes < 1024) {
-            return bytes + " B";
-        }
-        String[] units = {"KB", "MB", "GB", "TB"};
-        double value = bytes;
-        int index = -1;
-        while (value >= 1024 && index < units.length - 1) {
-            value /= 1024;
-            index++;
-        }
-        return String.format("%.1f %s", value, units[index]);
-    }
 }

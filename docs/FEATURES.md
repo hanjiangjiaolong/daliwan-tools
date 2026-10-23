@@ -285,8 +285,8 @@
 | Office | Stirling Office Convert 0.2.2 两个模块 + PDFBox 3.0.8 + POI 5.5.1（MIT / Apache-2.0，内嵌，无需 Office / LibreOffice；需 Java 25）：`stirling-office-convert-topdf` 负责 Office → PDF，`stirling-office-convert`（core）负责 PDF → Office |
 | 打包 | maven-shade（可执行 fat jar）→ jlink（精简运行时）→ jpackage（app-image）→ zip |
 | 协议 | **Apache-2.0**（`LICENSE` 全文 + `NOTICE` 第三方归属 + pom `<licenses>`）；仓库内无商业授权组件 |
-| 体积 | fat jar 63 MB ｜ 绿色版 zip 114 MB ｜ 解压后 159 MB（运行时 95 MB + 应用 64 MB）<br>大头：Java 25 运行时九十五 MB（GraalVM jlink；换 Temurin 25 可回到 52 MB）、OCR 模型与动态库二十 MB、POI + fesod 十二 MB；本程序代码 0.4 MB |
-| 质量 | 358 个单元测试，`core` 层不引用 JavaFX，界面切换集中在应用入口；会改系统的代码（更新开关）只测脚本与解析，不在测试里真跑 |
+| 体积 | fat jar 61 MB ｜ 绿色版 zip 96.6 MB ｜ 解压后 113 MB（运行时 51 MB + 应用 62 MB）<br>大头：OCR 模型与动态库二十 MB、POI + fesod 十二 MB、Java 25 运行时（GraalVM jlink，已删掉用不上的 JVMCI 编译器）<br>已做的精简：jlink 只打包 jdeps 实际需要的模块、排除 ehcache / commons-math3 / jai-imageio、剔除 PP-OCRv3 模型；再往下只能动 OCR（改成首次使用时下载，主包可到 79 MB，但第一次用要联网） |
+| 质量 | 363 个单元测试，`core` 层不引用 JavaFX，界面切换集中在应用入口；会改系统的代码（更新开关）只测脚本与解析，不在测试里真跑 |
 
 ---
 

@@ -51,8 +51,17 @@ public class TimestampPane extends VBox {
             new ZoneOption("伦敦", ZoneId.of("Europe/London"))
     );
 
+    /**
+     * 展示用的可读格式，也是 {@link #DATE_FORMATS} 里最优先尝试的那一种。
+     *
+     * <p>提为常量而不是每次现造：当前时间的那行每秒刷新一次，
+     * {@code ofPattern} 每次都要重新解析一遍模板。
+     */
+    private static final DateTimeFormatter READABLE =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
+
     private static final List<DateTimeFormatter> DATE_FORMATS = List.of(
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+            READABLE,
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
             DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"),
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"),
@@ -108,13 +117,8 @@ public class TimestampPane extends VBox {
         Label millisLabel = new Label("毫秒");
         millisLabel.getStyleClass().add("metric-label");
 
-        Button copySeconds = new Button("复制");
-        copySeconds.getStyleClass().add("copy-button");
-        copySeconds.setOnAction(e -> copyWithFeedback(copySeconds, currentSeconds.getText()));
-
-        Button copyMillis = new Button("复制");
-        copyMillis.getStyleClass().add("copy-button");
-        copyMillis.setOnAction(e -> copyWithFeedback(copyMillis, currentMillis.getText()));
+        Button copySeconds = UiKit.copyButton("复制", currentSeconds::getText);
+        Button copyMillis = UiKit.copyButton("复制", currentMillis::getText);
 
         HBox secondsValue = new HBox(10, currentSeconds, copySeconds);
         secondsValue.setAlignment(Pos.BOTTOM_LEFT);
@@ -127,7 +131,7 @@ public class TimestampPane extends VBox {
         HBox values = new HBox(28, secondsBox, millisBox);
         values.setAlignment(Pos.CENTER_LEFT);
 
-        VBox card = new VBox(8, sectionTitle("当前时间戳"), values, currentReadable);
+        VBox card = new VBox(8, UiKit.cardTitle("当前时间戳"), values, currentReadable);
         card.getStyleClass().add("card");
         return card;
     }
@@ -149,7 +153,7 @@ public class TimestampPane extends VBox {
 
         timestampStatus.getStyleClass().add("status");
 
-        VBox card = new VBox(10, sectionTitle("时间戳 → 日期时间"), inputRow, timestampStatus, timestampResult);
+        VBox card = new VBox(10, UiKit.cardTitle("时间戳 → 日期时间"), inputRow, timestampStatus, timestampResult);
         card.getStyleClass().add("card");
         return card;
     }
@@ -169,15 +173,9 @@ public class TimestampPane extends VBox {
 
         dateStatus.getStyleClass().add("status");
 
-        VBox card = new VBox(10, sectionTitle("日期时间 → 时间戳"), inputRow, dateStatus, dateResult);
+        VBox card = new VBox(10, UiKit.cardTitle("日期时间 → 时间戳"), inputRow, dateStatus, dateResult);
         card.getStyleClass().add("card");
         return card;
-    }
-
-    private Label sectionTitle(String text) {
-        Label label = new Label(text);
-        label.getStyleClass().add("card-title");
-        return label;
     }
 
     // ---------------------------------------------------------------- 逻辑
@@ -200,7 +198,7 @@ public class TimestampPane extends VBox {
         timestampResult.getChildren().clear();
         String raw = timestampInput.getText().trim();
         if (raw.isEmpty()) {
-            setStatus(timestampStatus, "", false);
+            UiKit.setStatus(timestampStatus, "", false);
             return;
         }
         long value;
@@ -209,7 +207,7 @@ public class TimestampPane extends VBox {
             value = Long.parseLong(raw);
             millis = raw.replace("-", "").length() >= 13;
         } catch (NumberFormatException e) {
-            setStatus(timestampStatus, "✗ 请输入纯数字时间戳", true);
+            UiKit.setStatus(timestampStatus, "✗ 请输入纯数字时间戳", true);
             return;
         }
 
@@ -221,27 +219,27 @@ public class TimestampPane extends VBox {
         addRow(timestampResult, "RFC 1123", DateTimeFormatter.RFC_1123_DATE_TIME.format(instant.atZone(zone)));
         addRow(timestampResult, "UTC", format(instant, ZoneOffset.UTC));
         addRow(timestampResult, "识别为", millis ? "毫秒（13 位）" : "秒（10 位）");
-        setStatus(timestampStatus, "", false);
+        UiKit.setStatus(timestampStatus, "", false);
     }
 
     private void convertDate() {
         dateResult.getChildren().clear();
         String raw = dateInput.getText().trim();
         if (raw.isEmpty()) {
-            setStatus(dateStatus, "", false);
+            UiKit.setStatus(dateStatus, "", false);
             return;
         }
         ZoneId zone = zoneBox.getValue().zone();
         LocalDateTime dateTime = parseDateTime(raw);
         if (dateTime == null) {
-            setStatus(dateStatus, "✗ 无法识别该日期格式，建议使用 yyyy-MM-dd HH:mm:ss", true);
+            UiKit.setStatus(dateStatus, "✗ 无法识别该日期格式，建议使用 yyyy-MM-dd HH:mm:ss", true);
             return;
         }
         ZonedDateTime zoned = dateTime.atZone(zone);
         addRow(dateResult, "秒", String.valueOf(zoned.toEpochSecond()));
         addRow(dateResult, "毫秒", String.valueOf(zoned.toInstant().toEpochMilli()));
         addRow(dateResult, "ISO 8601", DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(zoned));
-        setStatus(dateStatus, "", false);
+        UiKit.setStatus(dateStatus, "", false);
     }
 
     private LocalDateTime parseDateTime(String raw) {
@@ -266,8 +264,7 @@ public class TimestampPane extends VBox {
     }
 
     private String format(Instant instant, ZoneId zone) {
-        return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
-                .format(instant.atZone(zone));
+        return READABLE.format(instant.atZone(zone));
     }
 
     private void addRow(VBox container, String name, String value) {
@@ -279,36 +276,9 @@ public class TimestampPane extends VBox {
         Label valueLabel = new Label(value);
         valueLabel.getStyleClass().add("result-value");
 
-        Button copyButton = new Button("复制");
-        copyButton.getStyleClass().add("copy-button");
-        copyButton.setOnAction(e -> copyWithFeedback(copyButton, value));
-
-        HBox row = new HBox(10, nameLabel, valueLabel, spacer(), copyButton);
+        HBox row = new HBox(10, nameLabel, valueLabel, UiKit.spacer(),
+                UiKit.copyButton("复制", () -> value));
         row.setAlignment(Pos.CENTER_LEFT);
         container.getChildren().add(row);
-    }
-
-    private Region spacer() {
-        Region region = new Region();
-        HBox.setHgrow(region, Priority.ALWAYS);
-        return region;
-    }
-
-    private void copyWithFeedback(Button button, String text) {
-        if (!ClipboardUtil.copy(text)) {
-            return;
-        }
-        button.setText("已复制");
-        PauseTransition reset = new PauseTransition(Duration.millis(1200));
-        reset.setOnFinished(e -> button.setText("复制"));
-        reset.play();
-    }
-
-    private void setStatus(Label label, String message, boolean error) {
-        label.setText(message);
-        label.getStyleClass().setAll("status");
-        if (error) {
-            label.getStyleClass().add("status-error");
-        }
     }
 }

@@ -1,5 +1,6 @@
 package com.daliwan.tool.ui;
 
+import com.daliwan.tool.util.ByteSizes;
 import com.daliwan.tool.core.ImageBase64Codec;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -264,7 +265,7 @@ public class ImageBase64Pane extends VBox {
 
     private String statusForDecode() {
         return decodedBytes == null ? "粘贴 Base64 后点「解码预览」"
-                : "✓ 已解码 " + formatSize(decodedBytes.length) + "，" + decodedExtension.toUpperCase();
+                : "✓ 已解码 " + ByteSizes.format(decodedBytes.length) + "，" + decodedExtension.toUpperCase();
     }
 
     private void configureSources() {
@@ -300,8 +301,8 @@ public class ImageBase64Pane extends VBox {
             protected byte[] call() throws IOException {
                 long size = Files.size(file);
                 if (size > FILE_LIMIT) {
-                    throw new IOException("文件过大（" + formatSize(size) + "），上限 "
-                            + formatSize(FILE_LIMIT));
+                    throw new IOException("文件过大（" + ByteSizes.format(size) + "），上限 "
+                            + ByteSizes.format(FILE_LIMIT));
                 }
                 return Files.readAllBytes(file);
             }
@@ -310,7 +311,7 @@ public class ImageBase64Pane extends VBox {
             byte[] bytes = task.getValue();
             encoded = ImageBase64Codec.encode(bytes, file.getFileName().toString());
             showImage(encodedPreview, encodedPlaceholder, bytes);
-            fileInfo.setText(file.getFileName() + " · " + formatSize(bytes.length)
+            fileInfo.setText(file.getFileName() + " · " + ByteSizes.format(bytes.length)
                     + " · " + encoded.mime());
             copyButton.setDisable(false);
             renderOutput();
@@ -344,10 +345,10 @@ public class ImageBase64Pane extends VBox {
             decodedBytes = decoded.data();
             decodedExtension = decoded.extension();
             showImage(decodedPreview, decodedPlaceholder, decoded.data());
-            decodeInfo.setText(formatSize(decodedBytes.length) + " · " + decoded.mime()
+            decodeInfo.setText(ByteSizes.format(decodedBytes.length) + " · " + decoded.mime()
                     + " · 建议保存为 ." + decodedExtension);
             saveButton.setDisable(false);
-            setStatus("✓ 解码完成，" + formatSize(decodedBytes.length) + "（" + decoded.mime() + "）", false);
+            setStatus("✓ 解码完成，" + ByteSizes.format(decodedBytes.length) + "（" + decoded.mime() + "）", false);
         } catch (IllegalArgumentException error) {
             decodedBytes = null;
             saveButton.setDisable(true);
@@ -381,7 +382,7 @@ public class ImageBase64Pane extends VBox {
         chooser.setInitialFileName("image." + decodedExtension);
         chooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("图片", "*." + decodedExtension));
-        File target = chooser.showSaveDialog(getScene() == null ? null : getScene().getWindow());
+        File target = chooser.showSaveDialog(UiKit.ownerWindow(this));
         if (target == null) {
             return;
         }
@@ -430,16 +431,6 @@ public class ImageBase64Pane extends VBox {
         return message == null || message.isBlank() ? error.toString() : message;
     }
 
-    /** 人类可读的体积，用于状态行与预览信息。 */
-    static String formatSize(long bytes) {
-        if (bytes < 1024) {
-            return bytes + " B";
-        }
-        if (bytes < 1024L * 1024L) {
-            return String.format("%.1f KB", bytes / 1024.0);
-        }
-        return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
-    }
 
     // ---------------------------------------------------------------- 自检接口
 
@@ -447,7 +438,7 @@ public class ImageBase64Pane extends VBox {
     public void encodeBytes(byte[] bytes, String fileName) {
         encoded = ImageBase64Codec.encode(bytes, fileName);
         showImage(encodedPreview, encodedPlaceholder, bytes);
-        fileInfo.setText(fileName + " · " + formatSize(bytes.length) + " · " + encoded.mime());
+        fileInfo.setText(fileName + " · " + ByteSizes.format(bytes.length) + " · " + encoded.mime());
         copyButton.setDisable(false);
         renderOutput();
     }

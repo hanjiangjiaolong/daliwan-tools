@@ -63,8 +63,7 @@ public class RsaPane extends VBox {
         generateButton.getStyleClass().add("ghost-button");
         generateButton.setOnAction(e -> generateKeys());
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button clearButton = new Button("清空");
         clearButton.getStyleClass().add("ghost-button");
@@ -188,9 +187,7 @@ public class RsaPane extends VBox {
             generateButton.setDisable(false);
         });
 
-        Thread worker = new Thread(task, "rsa-keygen");
-        worker.setDaemon(true);
-        worker.start();
+        UiKit.runInBackground(task, "rsa-keygen");
     }
 
     private void encrypt() throws CipherException {

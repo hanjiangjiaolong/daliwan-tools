@@ -50,8 +50,7 @@ public class UnicodePane extends VBox {
         caseBox.setValue(UnicodeCodec.LetterCase.LOWER);
         caseBox.getStyleClass().add("indent-box");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button clearButton = new Button("清空");
         clearButton.getStyleClass().add("ghost-button");
@@ -78,8 +77,7 @@ public class UnicodePane extends VBox {
 
         statusLabel.getStyleClass().add("status");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button copyButton = UiKit.copyButton("复制结果", () -> output.getText());
 

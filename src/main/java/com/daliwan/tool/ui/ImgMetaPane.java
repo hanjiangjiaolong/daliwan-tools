@@ -91,8 +91,7 @@ public class ImgMetaPane extends VBox {
         clearButton.getStyleClass().add("ghost-button");
         clearButton.setOnAction(e -> clearAll());
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         HBox bar = new HBox(8, UiKit.hint("拖入图片即可读取元数据，多张可一次处理"), spacer,
                 chooseButton, copyButton, stripButton, clearButton);
@@ -136,7 +135,7 @@ public class ImgMetaPane extends VBox {
                 "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp", "*.webp",
                 "*.tif", "*.tiff", "*.heic", "*.heif", "*.ico", "*.psd"));
         List<File> chosen = chooser.showOpenMultipleDialog(
-                getScene() == null ? null : getScene().getWindow());
+                UiKit.ownerWindow(this));
         if (chosen != null && !chosen.isEmpty()) {
             applyBatch(chosen.stream().map(File::toPath).toList());
         }
@@ -153,7 +152,7 @@ public class ImgMetaPane extends VBox {
         if (targets.isEmpty()) {
             return;
         }
-        StripMetaDialog.show(getScene() == null ? null : getScene().getWindow(), targets, outputs -> {
+        StripMetaDialog.show(UiKit.ownerWindow(this), targets, outputs -> {
             if (outputs.isEmpty()) {
                 return;
             }
@@ -165,10 +164,6 @@ public class ImgMetaPane extends VBox {
     /** 复制按钮取值的来源；放在方法里引用字段，避免字段初始化顺序上的前向引用。 */
     private String currentText() {
         return current == null ? null : ImageMetaService.toText(current);
-    }
-
-    private boolean load(Path file) {
-        return load(file, null);
     }
 
     /**
@@ -215,9 +210,7 @@ public class ImgMetaPane extends VBox {
                     + (error == null ? "未知错误" : String.valueOf(error.getMessage())));
         });
 
-        Thread worker = new Thread(task, "img-meta-read");
-        worker.setDaemon(true);
-        worker.start();
+        UiKit.runInBackground(task, "img-meta-read");
         return true;
     }
 

@@ -190,8 +190,7 @@ public class JsonPane extends VBox {
     private HBox buildToolbar() {
         toolbarHint.getStyleClass().add("hint");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         indentBox.getItems().addAll(IndentStyle.values());
         indentBox.setValue(IndentStyle.TWO_SPACES);
@@ -494,7 +493,7 @@ public class JsonPane extends VBox {
             showTree();
         });
         task.setOnFailed(event -> setStatus("读取文件失败：" + messageOf(task.getException()), true));
-        runInBackground(task, "json-read-file");
+        UiKit.runInBackground(task, "json-read-file");
     }
 
     private static String messageOf(Throwable error) {
@@ -505,11 +504,6 @@ public class JsonPane extends VBox {
         return message == null || message.isBlank() ? error.toString() : message;
     }
 
-    private static void runInBackground(Task<?> task, String threadName) {
-        Thread worker = new Thread(task, threadName);
-        worker.setDaemon(true);
-        worker.start();
-    }
 
     // ---------------------------------------------------------------- 对外接口
 
@@ -794,7 +788,7 @@ public class JsonPane extends VBox {
             setStatus("✗ " + message, true);
             revertToText();
         });
-        runInBackground(task, "json-tree-build");
+        UiKit.runInBackground(task, "json-tree-build");
     }
 
     /** 解析成功后把根节点挂上，并展开前两层。 */
@@ -995,7 +989,7 @@ public class JsonPane extends VBox {
             setStatus("✗ " + message, true);
             revertToText();
         });
-        runInBackground(task, "json-table-build");
+        UiKit.runInBackground(task, "json-table-build");
     }
 
     /** 把自动定位的结果装进界面：先铺数据源下拉，再填表格。 */
@@ -1054,7 +1048,7 @@ public class JsonPane extends VBox {
                             .findFirst().orElse(null)));
             syncingSource = false;
         });
-        runInBackground(task, "json-table-switch");
+        UiKit.runInBackground(task, "json-table-switch");
     }
 
     /**
@@ -1238,7 +1232,7 @@ public class JsonPane extends VBox {
         task.setOnSucceeded(event -> setStatus("✓ 已导出 " + target.getName() + "（"
                 + data.rows().size() + " 行 × " + data.columns().size() + " 列）", false));
         task.setOnFailed(event -> setStatus("✗ 导出失败：" + messageOf(task.getException()), true));
-        runInBackground(task, "json-xlsx-export");
+        UiKit.runInBackground(task, "json-xlsx-export");
     }
 
     /** 导出为 CSV（UTF-8 带 BOM，Excel 打开不乱码）。 */
@@ -1262,7 +1256,7 @@ public class JsonPane extends VBox {
         };
         task.setOnSucceeded(event -> setStatus("✓ 已导出 " + target.getName(), false));
         task.setOnFailed(event -> setStatus("✗ 导出失败：" + messageOf(task.getException()), true));
-        runInBackground(task, "json-csv-export");
+        UiKit.runInBackground(task, "json-csv-export");
     }
 
     /** 选保存位置；用户取消时返回 {@code null}。 */
@@ -1272,7 +1266,7 @@ public class JsonPane extends VBox {
         chooser.setTitle(title);
         chooser.setInitialFileName(fileName);
         chooser.getExtensionFilters().add(filter);
-        return chooser.showSaveDialog(getScene() == null ? null : getScene().getWindow());
+        return chooser.showSaveDialog(UiKit.ownerWindow(this));
     }
 
     /** 导出文件名的默认值：取数据源路径的最后一段，{@code data.list} → {@code list}。 */

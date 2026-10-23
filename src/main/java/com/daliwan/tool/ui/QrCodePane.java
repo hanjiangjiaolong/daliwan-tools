@@ -97,8 +97,7 @@ public class QrCodePane extends VBox {
         backgroundPicker.getStyleClass().add("color-picker-small");
         backgroundPicker.setOnAction(e -> regenerate());
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         Button clearButton = new Button("清空");
         clearButton.getStyleClass().add("ghost-button");
@@ -231,7 +230,7 @@ public class QrCodePane extends VBox {
         chooser.setInitialFileName("qrcode.png");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG 图片", "*.png"));
         try {
-            File chosen = chooser.showSaveDialog(getScene() == null ? null : getScene().getWindow());
+            File chosen = chooser.showSaveDialog(UiKit.ownerWindow(this));
             if (chosen == null) {
                 return;
             }

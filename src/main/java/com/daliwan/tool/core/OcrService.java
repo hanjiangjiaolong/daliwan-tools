@@ -65,11 +65,6 @@ public final class OcrService {
         engine();
     }
 
-    /** 引擎是否已经就绪。 */
-    public static boolean isReady() {
-        return engine != null;
-    }
-
     /** 返回引擎描述，用于界面展示。 */
     public static String describeEngine() {
         return "RapidOCR · PP-OCRv4（内置，无需安装）";

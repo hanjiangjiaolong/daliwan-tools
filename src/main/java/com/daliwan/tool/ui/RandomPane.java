@@ -84,8 +84,7 @@ public class RandomPane extends VBox {
         countBox.setValue(10);
         countBox.getStyleClass().add("indent-box");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Region spacer = UiKit.spacer();
 
         HBox bar = new HBox(8, UiKit.hint("UUID v4 与自定义字符集随机串"), spacer,
                 countLabel, countBox, uuidMode, stringMode);
@@ -103,7 +102,7 @@ public class RandomPane extends VBox {
 
         HBox row = new HBox(14, hyphenBox, upperBox);
         row.setAlignment(Pos.CENTER_LEFT);
-        return new VBox(6, sectionTitle("UUID 选项"), row);
+        return new VBox(6, UiKit.cardTitle("UUID 选项"), row);
     }
 
     private VBox buildStringOptions() {
@@ -131,7 +130,7 @@ public class RandomPane extends VBox {
         HBox charsetRow = new HBox(14, digitBox, lowerBox, upperLetterBox, symbolBox, avoidBox);
         charsetRow.setAlignment(Pos.CENTER_LEFT);
 
-        return new VBox(8, sectionTitle("随机字符串选项"), lengthRow, charsetRow, poolLabel);
+        return new VBox(8, UiKit.cardTitle("随机字符串选项"), lengthRow, charsetRow, poolLabel);
     }
 
     private HBox buildFooter() {
@@ -148,12 +147,6 @@ public class RandomPane extends VBox {
         HBox bar = new HBox(8, generateButton, copyButton, statusLabel);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
-    }
-
-    private Label sectionTitle(String text) {
-        Label label = new Label(text);
-        label.getStyleClass().add("card-title");
-        return label;
     }
 
     // ---------------------------------------------------------------- 逻辑
