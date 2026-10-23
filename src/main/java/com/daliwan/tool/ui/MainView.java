@@ -4,6 +4,7 @@ import com.daliwan.tool.core.ToolSettings;
 import com.daliwan.tool.core.shell.AppLauncher;
 import com.daliwan.tool.core.shell.ContextMenuIntegration;
 import com.daliwan.tool.core.shell.Win11Menu;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,6 +25,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -134,8 +136,15 @@ public class MainView extends BorderPane {
         ThemeManager.onChange(this::refreshThemeIcon);
         refreshThemeIcon();
         followSystemThemeOnFocus();
-        restoreShellIntegration();
-        syncWin11MenuState();
+
+        // 注册表校准要起 powerShell / reg.exe，一上来就跑会和首屏抢 CPU 与磁盘，
+        // 把启动拖慢一截；等窗口画出来、界面空下来了再做，结果一样，只是晚一两秒
+        PauseTransition idle = new PauseTransition(Duration.millis(1200));
+        idle.setOnFinished(event -> {
+            restoreShellIntegration();
+            syncWin11MenuState();
+        });
+        idle.play();
     }
 
     /**
@@ -499,6 +508,22 @@ public class MainView extends BorderPane {
     /** 首次显示时选中第一项。 */
     public void selectFirst() {
         ensureSelection();
+    }
+
+    /**
+     * 只点亮第一项并写好标题，不构建页面。
+     *
+     * <p>首页（JSON）首次构建要把 RichTextFX 那一套类初始化起来，三百毫秒起步；
+     * 窗口先 show、页面随后再建，用户看到的是「立刻出来的窗口」而不是一段白屏。
+     */
+    public void primeFirstHeader() {
+        if (navGroup.getToggles().isEmpty()) {
+            return;
+        }
+        ToggleButton first = (ToggleButton) navGroup.getToggles().get(0);
+        NavEntry entry = (NavEntry) first.getUserData();
+        updateHeader(entry.title(), entry.hint());
+        first.setSelected(true);
     }
 
     /** 保证当前选中项仍然可见，否则回退到第一个可见项。 */

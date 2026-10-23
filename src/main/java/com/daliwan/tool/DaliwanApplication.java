@@ -5,6 +5,7 @@ import com.daliwan.tool.core.cli.PdfCommand;
 import com.daliwan.tool.core.ipc.InstanceBridge;
 import com.daliwan.tool.ui.MainView;
 import com.daliwan.tool.ui.ThemeManager;
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
@@ -64,9 +65,26 @@ public class DaliwanApplication extends Application {
         // 最小尺寸也按屏幕收缩，否则小屏幕上用户没法定到比它还小
         stage.setMinWidth(Math.min(MIN_WIDTH, screen.getWidth() - SCREEN_MARGIN / 2));
         stage.setMinHeight(Math.min(MIN_HEIGHT, screen.getHeight() - SCREEN_MARGIN / 2));
+
+        // 先把窗口和标题交出去：首页要初始化 RichTextFX 那一套类（约 300 ms），
+        // 放在 show 之前会把首帧一起堵住，用户看到的是白屏。
+        // 注意不能用 runLater——它会并进同一批任务，照样排在首帧前面；
+        // 用 AnimationTimer 等真正画过一帧，再把页面填进去
+        root.primeFirstHeader();
         stage.show();
 
-        root.selectFirst();
+        new AnimationTimer() {
+            private int frames;
+
+            @Override
+            public void handle(long now) {
+                if (++frames < 2) {
+                    return;
+                }
+                stop();
+                root.selectFirst();
+            }
+        }.start();
         // 窗口开着时，右键请求并到这个实例，但只在后台转：不切页、不前置、不抢焦点，
         // 结果照旧用独立卡片，和程序没开时看到的一模一样
         bridge = InstanceBridge.start(request -> {
