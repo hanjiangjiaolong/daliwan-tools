@@ -6,7 +6,6 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
@@ -81,7 +80,7 @@ public class JsonCodeArea extends StackPane {
 
         codeArea.setEditable(editable);
         codeArea.getStyleClass().add(editable ? "json-code-area" : "json-code-area-readonly");
-        codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
+        LineNumberGutter.install(codeArea);
 
         getChildren().add(new VirtualizedScrollPane<>(codeArea));
 

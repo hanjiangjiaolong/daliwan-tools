@@ -4,6 +4,8 @@
 
 **Apache-2.0** 开源 ｜ JavaFX 25 界面 ｜ 构建与运行需 **JDK 25** ｜ 绿色版自带运行时，目标机器不用装 Java
 
+源码仓库：<https://gitee.com/hanjiangjiaolong/daliwan-tools>
+
 深色主题：
 
 ![哈希摘要](docs/screenshot-hash.png)

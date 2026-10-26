@@ -1116,6 +1116,14 @@
     -fx-text-fill: -c-text;
 }
 
+/* 仓库地址：可点开浏览器，颜色跟着主题主色 */
+.about-link {
+    -fx-padding: 0;
+    -fx-border-width: 0;
+    -fx-text-fill: -c-accent;
+    -fx-font-size: 11.5px;
+}
+
 /* 长文本（配置文件路径、说明段）走 TextFlow，颜色必须显式给 Text 指定 */
 .about-text {
     -fx-font-size: 11.5px;
@@ -1465,12 +1473,12 @@
     -fx-background-color: transparent;
 }
 
-/* 行号栏 */
+/* 行号栏。字体不在这里写：样式表里的字体族同样要交给机器解析，
+   逻辑字体名 monospace 在不同机器上会落到不同字体（个别机器上就是乱码）。
+   行号字体由 ui.LineNumberGutter 探测出真实存在的字体后用 inline 样式指定。 */
 .lineno {
     -fx-background-color: -c-surface-3;
     -fx-text-fill: -c-text-3;
-    -fx-font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
-    -fx-font-size: 11px;
     -fx-padding: 0 9 0 8;
     -fx-border-color: transparent -c-border transparent transparent;
     -fx-border-width: 0 1 0 0;

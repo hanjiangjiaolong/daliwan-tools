@@ -5,7 +5,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
@@ -32,7 +31,7 @@ public class SqlCodeArea extends StackPane {
 
         codeArea.setEditable(false);
         codeArea.getStyleClass().add("sql-code-area");
-        codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
+        LineNumberGutter.install(codeArea);
         // 结果只读，光标没意义，但保留选中与复制
         codeArea.setFocusTraversable(true);
 

@@ -19,6 +19,9 @@ public final class AppInfo {
     /** 一句话定位，用于弹窗副标题。 */
     public static final String TAGLINE = "本地运行 · 不联网 · 不上传任何数据";
 
+    /** 源码仓库地址。 */
+    public static final String REPO_URL = "https://gitee.com/hanjiangjiaolong/daliwan-tools";
+
     /** 拿不到 jar 清单时（开发期直接跑 class 目录）退回的版本号。 */
     private static final String FALLBACK_VERSION = "1.0.0";
 
@@ -79,6 +82,11 @@ public final class AppInfo {
         return "Apache-2.0";
     }
 
+    /** 源码仓库地址；界面上做成可点击的链接。 */
+    public static String repository() {
+        return REPO_URL;
+    }
+
     /** 第三方组件清单（不可变）。 */
     public static List<Credit> credits() {
         return CREDITS;
@@ -95,7 +103,8 @@ public final class AppInfo {
         text.append(TAGLINE).append('\n');
         text.append("Java ").append(javaRuntime()).append('\n');
         text.append("系统 ").append(osDescription()).append('\n');
-        text.append("配置文件 ").append(configPath());
+        text.append("配置文件 ").append(configPath()).append('\n');
+        text.append("仓库 ").append(REPO_URL);
         return text.toString();
     }
 }

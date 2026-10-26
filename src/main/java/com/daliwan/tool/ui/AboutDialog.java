@@ -7,6 +7,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -49,7 +50,7 @@ public final class AboutDialog {
         root.setPadding(new Insets(18, 20, 16, 20));
 
         // 宽度按内容算过：三列组件清单 + 页脚刚好放得下，再窄就得滚动
-        Scene scene = new Scene(root, 580, 620);
+        Scene scene = new Scene(root, 580, 648);
         if (owner != null && owner.getScene() != null) {
             scene.getStylesheets().addAll(owner.getScene().getStylesheets());
         }
@@ -114,9 +115,43 @@ public final class AboutDialog {
         card.getChildren().add(kv("Java", AppInfo.javaRuntime()));
         card.getChildren().add(kv("系统", AppInfo.osDescription()));
         card.getChildren().add(kv("开源协议", AppInfo.license()));
+        card.getChildren().add(repoRow());
         // 路径长且可能含中文，走 TextFlow 换行：Label.setWrapText 在 VBox 里首帧只给单行高
         card.getChildren().add(kv("配置文件", null, AppInfo.configPath()));
         return card;
+    }
+
+    /**
+     * 仓库地址：能点开就直接打开浏览器，不依赖浏览器也还能复制链接。
+     *
+     * <p>打开失败（没装默认浏览器、被安全软件拦）时把地址复制走——
+     * 用户总得有个办法拿到它，否则点一下没反应就会以为程序坏了。
+     */
+    private Node repoRow() {
+        Label key = new Label("项目仓库");
+        key.getStyleClass().add("about-kv-key");
+        key.setMinWidth(62);
+
+        Hyperlink link = new Hyperlink(AppInfo.repository());
+        link.getStyleClass().add("about-link");
+        link.setOnAction(event -> openRepository(link));
+
+        Button copy = UiKit.copyButton("复制", AppInfo::repository);
+
+        HBox row = new HBox(8, key, link, copy);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
+    }
+
+    private static void openRepository(Hyperlink link) {
+        try {
+            java.awt.Desktop.getDesktop().browse(new java.net.URI(AppInfo.repository()));
+        } catch (RuntimeException | java.io.IOException | java.net.URISyntaxException ignored) {
+            ClipboardContent content = new ClipboardContent();
+            content.putString(AppInfo.repository());
+            Clipboard.getSystemClipboard().setContent(content);
+            link.setText("已复制地址");
+        }
     }
 
     private Node buildNoteCard() {

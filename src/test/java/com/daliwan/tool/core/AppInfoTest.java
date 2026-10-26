@@ -46,12 +46,19 @@ class AppInfoTest {
     }
 
     @Test
+    void repositoryIsPublished() {
+        assertTrue(AppInfo.repository().startsWith("https://"), "仓库地址应是可直接点开的 https 链接");
+        assertFalse(AppInfo.repository().isBlank());
+    }
+
+    @Test
     void summaryCarriesEverythingNeededForSupport() {
         String summary = AppInfo.summary();
         assertTrue(summary.contains(AppInfo.APP_NAME));
         assertTrue(summary.contains(AppInfo.version()));
         assertTrue(summary.contains("Java "), "应带 Java 运行时");
         assertTrue(summary.contains(AppInfo.configPath()), "应带配置文件路径，便于让用户直接打开看");
+        assertTrue(summary.contains(AppInfo.repository()), "应带仓库地址，方便别人直接去看源码");
         assertTrue(summary.lines().count() >= 5);
     }
 }
