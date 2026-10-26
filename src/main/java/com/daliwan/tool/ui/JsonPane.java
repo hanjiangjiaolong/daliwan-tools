@@ -7,6 +7,7 @@ import com.daliwan.tool.core.JsonFormatter;
 import com.daliwan.tool.core.JsonTable;
 import com.daliwan.tool.core.JsonTreeBuilder;
 import com.daliwan.tool.core.JsonTreeNode;
+import com.daliwan.tool.core.UnicodeEscape;
 import com.daliwan.tool.core.XlsxExporter;
 import com.daliwan.tool.util.ClipboardUtil;
 import javafx.animation.PauseTransition;
@@ -19,6 +20,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -111,6 +113,13 @@ public class JsonPane extends VBox {
     private final ComboBox<IndentStyle> indentBox = new ComboBox<>();
     private final Button formatButton = new Button("格式化");
     private final Button minifyButton = new Button("压缩");
+
+    /**
+     * 是否把文本里残留的 {@code \\u4f70} 还原成中文。
+     *
+     * <p>默认开：接口日志里常见被再转义过一层的数据，不还原的话看到的仍是一串反斜杠。
+     */
+    private final CheckBox unicodeToggle = new CheckBox("还原 \\u");
     private final Button expandButton = new Button("展开全部");
     private final Button collapseButton = new Button("折叠全部");
     private final Button exportButton = new Button("导出 ▾");
@@ -202,6 +211,12 @@ public class JsonPane extends VBox {
         minifyButton.getStyleClass().add("ghost-button");
         minifyButton.setOnAction(e -> doMinify());
 
+        unicodeToggle.setSelected(true);
+        unicodeToggle.getStyleClass().add("json-unicode-toggle");
+        unicodeToggle.setTooltip(new Tooltip(
+                "把文本里残留的 \\u4f70 这类二次转义还原成中文（标准 JSON 的 \\u4f70 本来就自动还原）"));
+        unicodeToggle.setOnAction(e -> refreshActiveView());
+
         expandButton.getStyleClass().add("ghost-button");
         expandButton.setDisable(true);
         expandButton.setOnAction(e -> setExpandedAll(true));
@@ -228,7 +243,7 @@ public class JsonPane extends VBox {
         clearButton.setOnAction(e -> clearAll());
 
         HBox bar = new HBox(8, toolbarHint, spacer, textToggle, treeToggle, tableToggle,
-                indentLabel, indentBox, formatButton, minifyButton,
+                indentLabel, indentBox, formatButton, minifyButton, unicodeToggle,
                 expandButton, collapseButton, sampleButton, clearButton);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
@@ -577,11 +592,22 @@ public class JsonPane extends VBox {
         return editor.getText();
     }
 
+    /**
+     * 交给解析器之前的文本：按需先还原二次转义。
+     *
+     * <p>还原只发生在解析环节，编辑框里的内容不动——
+     * 用户粘贴的原文要保持原样，点「格式化」才会把结果写回去。
+     */
+    private String sourceText() {
+        String raw = editor.getText();
+        return unicodeToggle.isSelected() ? UnicodeEscape.decode(raw) : raw;
+    }
+
     // ---------------------------------------------------------------- 动作
 
     private void doFormat() {
         debounce.stop();
-        String source = editor.getText();
+        String source = sourceText();
         if (source.isBlank()) {
             setStatus("请先输入 JSON 内容", true);
             return;
@@ -598,7 +624,7 @@ public class JsonPane extends VBox {
 
     private void doMinify() {
         debounce.stop();
-        String source = editor.getText();
+        String source = sourceText();
         if (source.isBlank()) {
             setStatus("请先输入 JSON 内容", true);
             return;
@@ -643,7 +669,7 @@ public class JsonPane extends VBox {
             return;
         }
         try {
-            String text = editor.getText();
+            String text = sourceText();
             if (text.isBlank()) {
                 setStatus("", false);
                 return;
@@ -735,6 +761,8 @@ public class JsonPane extends VBox {
             prepareTreeAsync();
         } else if (view == View.TABLE) {
             prepareTableAsync();
+        } else {
+            validateLive();
         }
     }
 
@@ -745,7 +773,7 @@ public class JsonPane extends VBox {
      * 期间显示「正在解析…」，失败则自动退回文本视图方便就地修改。
      */
     private void prepareTreeAsync() {
-        String text = editor.getText();
+        String text = sourceText();
         if (text.isBlank()) {
             setStatus("请先输入 JSON 内容", true);
             revertToText();
@@ -940,7 +968,7 @@ public class JsonPane extends VBox {
      * 会有一段明显空白。序号 token 用来丢弃过期结果。
      */
     private void prepareTableAsync() {
-        String text = editor.getText();
+        String text = sourceText();
         if (text.isBlank()) {
             setStatus("请先输入 JSON 内容", true);
             revertToText();

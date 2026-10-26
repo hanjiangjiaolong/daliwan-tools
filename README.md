@@ -39,7 +39,7 @@ java -jar target/daliwan_tool.jar
 
 | 分组 | 页面 | 干什么 |
 | --- | --- | --- |
-| JSON | JSON 工具 | 格式化 · 压缩 · 树视图 · 数组转表格 · 导出 xlsx |
+| JSON | JSON 工具 | 格式化 · 压缩 · 树视图 · 数组转表格 · 还原 \u 转义 · 导出 xlsx |
 | SQL | MyBatis SQL | 把 `Preparing` / `Parameters` 日志还原成可执行 SQL |
 | 转换 | 时间戳 | 时间与时间戳互转 |
 | 转换 | Base64 | 文本 / 图片 ⇄ Base64 · Data URI |

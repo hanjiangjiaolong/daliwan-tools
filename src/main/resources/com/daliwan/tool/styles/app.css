@@ -531,6 +531,12 @@
     -fx-background-color: -c-on-accent;
 }
 
+/* JSON 工具栏里「还原转义」的勾选框：和按钮一样给个手型光标 */
+.json-unicode-toggle {
+    -fx-cursor: hand;
+    -fx-padding: 0 2 0 4;
+}
+
 .option-check {
     -fx-font-size: 12px;
     -fx-text-fill: -c-text-2;
