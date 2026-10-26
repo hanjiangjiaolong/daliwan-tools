@@ -137,13 +137,29 @@ if not exist "dist\daliwan_tool\大力丸.exe" (
 )
 
 REM ---------- 4/4 压缩 ----------
-echo [4/4] 压缩为 release\daliwan_tool-windows-x64.zip ...
-where python >nul 2>nul
-if errorlevel 1 (
-    echo [提示] 未找到 python，跳过压缩；直接使用 dist\daliwan_tool 目录即可
-) else (
-    if not exist release mkdir release
+set ZIP_OUT=release\daliwan_tool-windows-x64.zip
+echo [4/4] 压缩为 %ZIP_OUT% ...
+if not exist release mkdir release
+set ZIP_OK=0
+REM Windows 上 python 经常是应用商店的占位程序：where 找得到，一执行却什么都不做，
+REM 压缩包因此静默消失。这里先真跑一句命令确认可用，不行就退回系统自带的 tar。
+python -c "import zipfile" >nul 2>nul
+if not errorlevel 1 (
     python tools\zip_app.py
+    if not errorlevel 1 set ZIP_OK=1
+)
+if "%ZIP_OK%"=="0" (
+    echo [提示] 没找到可用的 python，改用系统自带的 tar 压缩
+    if exist "%ZIP_OUT%" del /q "%ZIP_OUT%"
+    pushd dist
+    tar -a -c -f "..\%ZIP_OUT%" daliwan_tool
+    popd
+    if not errorlevel 1 set ZIP_OK=1
+)
+if "%ZIP_OK%"=="0" (
+    echo [警告] 压缩失败：可以手动把 dist\daliwan_tool 整个目录压成 zip 分发
+) else (
+    for %%F in ("%ZIP_OUT%") do echo           压缩包 %ZIP_OUT%，%%~zF 字节（超过 100 MB 传不上 Gitee）
 )
 
 echo.
