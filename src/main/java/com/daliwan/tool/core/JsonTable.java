@@ -217,6 +217,34 @@ public final class JsonTable {
     }
 
     /**
+     * 表格第 {@code index} 行对应的原始节点。
+     *
+     * <p>表格里一格只是一个字段的值，看不出这一行整体长什么样：字段多到要横向拖、
+     * 某个字段又是嵌套对象时尤其明显。要把整行还原成 JSON，只能回到解析好的文档
+     * 树里按位置取——不能拿单元格文本反拼，那一步已经把类型信息丢了
+     * （数字、布尔、字符串在单元格里都是同一种文本，拼回去分不出 {@code 1} 和 {@code "1"}）。
+     *
+     * @param document  解析好的文档，{@link AutoResult#document()}
+     * @param candidate 当前数据源；{@code null} 表示顶层被当成一行（全文没有数组时）
+     * @param index     行下标，从 0 开始
+     * @return 对应的节点；下标越界或数据源已失效时返回 {@code null}
+     */
+    public static JsonDocument.Node rowNode(JsonDocument document, Candidate candidate, int index) {
+        if (document == null || index < 0) {
+            return null;
+        }
+        if (candidate == null) {
+            // 顶层对象当一行：整张表就它一个，第二行起没有对应物
+            return index == 0 ? document.root() : null;
+        }
+        JsonDocument.Node array = nodeAt(document.root(), candidate.segments());
+        if (array == null || array.type() != JsonDocument.Type.ARRAY || index >= array.childCount()) {
+            return null;
+        }
+        return array.childAt(index);
+    }
+
+    /**
      * 沿对象链收集候选数组。
      *
      * <p>遇到数组就评估并停下，不深入其内部；遇到对象继续往下。

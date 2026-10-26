@@ -18,6 +18,7 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -551,6 +552,16 @@ public class JsonPane extends VBox {
         return tableView.getItems().size();
     }
 
+    /** 弹出第 rowNumber 行（1 起）的整行 JSON，效果等同于点击行号，供自动化自检。 */
+    public void openRowJsonNow(String rowNumber) {
+        showRowJson(Integer.parseInt(rowNumber.trim()) - 1, rowNumber);
+    }
+
+    /** 状态栏当前文字，供自动化自检断言。 */
+    public String status() {
+        return statusLabel.getText();
+    }
+
     /** 当前表格的列名（不含行号列）。 */
     public List<String> tableColumns() {
         return currentTable == null ? List.of() : currentTable.columns();
@@ -731,7 +742,7 @@ public class JsonPane extends VBox {
         exportButton.setDisable(table && currentTable == null);
 
         // 表格里的单元格是被列宽截断的，得告诉用户还有完整内容可看
-        toolbarHint.setText(table ? "双击单元格查看完整内容" : "粘贴或拖入 JSON");
+        toolbarHint.setText(table ? "双击单元格看完整内容 · 点行号看整行 JSON" : "粘贴或拖入 JSON");
 
         syncSourceBar();
         updateHighlightNote();
@@ -1106,6 +1117,8 @@ public class JsonPane extends VBox {
         indexColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().get(0)));
         indexColumn.setPrefWidth(52);
         indexColumn.setSortable(false);
+        // 行号可点：点一下看这一行的完整 JSON，行号列本身没有别的操作
+        indexColumn.setCellFactory(col -> new RowNumberCell());
         tableView.getColumns().add(indexColumn);
 
         for (int i = 0; i < data.columns().size(); i++) {
@@ -1212,6 +1225,128 @@ public class JsonPane extends VBox {
             Window owner = scene == null ? null : scene.getWindow();
             CellDetailDialog.show(owner, columnName, rowNumber, value);
         }
+    }
+
+    /**
+     * 行号列：点一下看这一行的完整 JSON。
+     *
+     * <p>表格一格只放一个字段，字段一多（或者某个字段本身就是嵌套对象）就拼不出
+     * 这一行到底长什么样。行号挨着每一行，点它最顺手。
+     *
+     * <p>这里用<b>单击</b>：弹窗是非模态的，看完关掉接着看表，不像单元格那样
+     * 需要双击防误触——单元格是正经要编辑和选中的内容，行号列除了看整行没别的用途。
+     */
+    private final class RowNumberCell extends TableCell<ObservableList<String>, String> {
+
+        private RowNumberCell() {
+            getStyleClass().add("row-number-cell");
+            setAlignment(Pos.CENTER_RIGHT);
+            setCursor(Cursor.HAND);
+            setTooltip(new Tooltip("点击查看这一行的完整 JSON"));
+            setOnMouseClicked(event -> {
+                if (!isEmpty()) {
+                    openRowJson();
+                }
+            });
+            setOnKeyPressed(event -> {
+                if (!isEmpty() && (event.getCode() == KeyCode.ENTER
+                        || event.getCode() == KeyCode.SPACE)) {
+                    openRowJson();
+                }
+            });
+            setContextMenu(buildRowMenu());
+        }
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            setText(empty || item == null ? null : item);
+        }
+
+        /** 右键菜单：不看弹窗也能拿到整行，复制是表格里最常见的下一步。 */
+        private ContextMenu buildRowMenu() {
+            MenuItem view = new MenuItem("查看整行 JSON");
+            view.setOnAction(event -> openRowJson());
+            MenuItem copy = new MenuItem("复制整行 JSON");
+            copy.setOnAction(event -> copyRowJson());
+            return new ContextMenu(view, copy);
+        }
+
+        private void openRowJson() {
+            ObservableList<String> row = getTableRow() == null ? null : getTableRow().getItem();
+            if (row == null || row.isEmpty()) {
+                return;
+            }
+            showRowJson(rowIndex(row.get(0)), row.get(0));
+        }
+
+        private void copyRowJson() {
+            ObservableList<String> row = getTableRow() == null ? null : getTableRow().getItem();
+            if (row == null || row.isEmpty()) {
+                return;
+            }
+            String json = rowJsonOf(rowIndex(row.get(0)));
+            if (json == null) {
+                setStatus("✗ 找不到这一行的原始数据", true);
+                return;
+            }
+            ClipboardUtil.copy(json);
+            setStatus("✓ 已复制第 " + row.get(0) + " 行的 JSON", false);
+        }
+
+        /** 行号文本（第一列存的那个数字）转回数据下标。 */
+        private int rowIndex(String rowNumber) {
+            try {
+                return Integer.parseInt(rowNumber.trim()) - 1;
+            } catch (NumberFormatException notANumber) {
+                return -1;
+            }
+        }
+    }
+
+    /** 弹出第 {@code rowIndex} 行（0 起）的完整 JSON。 */
+    private void showRowJson(int rowIndex, String rowNumber) {
+        String json = rowJsonOf(rowIndex);
+        if (json == null) {
+            setStatus("✗ 这一行没有对应的原始数据，重新转换一次表格再试", true);
+            return;
+        }
+        CellDetailDialog.showRow(UiKit.ownerWindow(tableView), rowNumber, currentTableSource, json);
+    }
+
+    /**
+     * 第 {@code rowIndex} 行的 JSON 文本（已按缩进排好）。
+     *
+     * <p>回到解析好的文档树里按位置取节点，而不是拿单元格文本反拼：
+     * 单元格里数字、布尔、字符串全是同一种文本，拼回去分不出 {@code 1} 和 {@code "1"}。
+     *
+     * @return 整行 JSON；下标越界或文档已失效时返回 {@code null}
+     */
+    private String rowJsonOf(int rowIndex) {
+        if (tableDocument == null || rowIndex < 0) {
+            return null;
+        }
+        JsonDocument.Node node = JsonTable.rowNode(tableDocument, currentCandidate(), rowIndex);
+        if (node == null) {
+            return null;
+        }
+        String compact = JsonDocument.compact(node);
+        try {
+            return JsonFormatter.format(compact, IndentStyle.TWO_SPACES);
+        } catch (JsonFormatException | RuntimeException notJson) {
+            // 到不了这一步：文档树里出来的文本必然合法，兜住是为了不让弹窗挂掉
+            return compact;
+        }
+    }
+
+    /** 当前表格用的数据源；没有候选（顶层对象当一行）时为 {@code null}。 */
+    private JsonTable.Candidate currentCandidate() {
+        for (JsonTable.Candidate candidate : tableCandidates) {
+            if (candidate.path().equals(currentTableSource)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     /** 悬停提示的预览文本：完整内容交给弹窗，这里只给个能认出来的开头。 */

@@ -23,12 +23,15 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 
 /**
- * 单元格详情：表格里一格的完整内容。
+ * 表格里一块 JSON 的完整内容：单元格详情，或整行 JSON。
  *
  * <p>表格列宽有限，长文本会被截断成一行省略号——嵌套的对象 / 数组还原成 JSON 后
  * 动辄几百字符，光看表格根本读不全。双击单元格弹出这个窗口，内容照原样铺开：
  * 复用编辑器的 {@link JsonCodeArea}，行号与语法着色跟主界面一致，能滚动、能复制，
  * 看着像 JSON 的还会默认格式化好（一键切回原始串）。
+ *
+ * <p>{@link #showRow} 复用同一个窗口看「整行 JSON」：表格一格一个字段，字段一多
+ * 就拼不出这一行长什么样，点行号把整行铺出来，内容由调用方排好版，这里原样显示。
  *
  * <p>刻意做成<b>非模态</b>：看一个单元格时往往还要对照别的行，模态窗口会把主界面
  * 锁住，只能关了再看下一个。非模态下双击另一个单元格，这里的内容就地换掉。
@@ -47,6 +50,7 @@ public final class CellDetailDialog {
     private static CellDetailDialog open;
 
     private final Stage stage = new Stage();
+    private final Label title = new Label("单元格内容");
     private final Label meta = new Label();
     private final JsonCodeArea area = new JsonCodeArea(false);
     private final Label highlightNote = new Label();
@@ -60,7 +64,6 @@ public final class CellDetailDialog {
     private boolean showPretty;
 
     private CellDetailDialog(Window owner) {
-        Label title = new Label("单元格内容");
         title.getStyleClass().add("card-title");
         meta.getStyleClass().add("hint");
 
@@ -155,6 +158,31 @@ public final class CellDetailDialog {
      * @param text       单元格原文
      */
     public static void show(Window owner, String column, String rowNumber, String text) {
+        CellDetailDialog dialog = dialogFor(owner);
+        dialog.fill(column, rowNumber, text);
+        dialog.reveal();
+    }
+
+    /**
+     * 弹出（或刷新）整行 JSON。
+     *
+     * <p>表格看的是「一格一个字段」，一行的全貌得靠这个窗口补：字段多到横向拖不完、
+     * 某些字段又是嵌套对象时，光看表格拼不出这一行到底是什么。
+     * 行号列点一下就出这个窗口，内容按缩进铺开，可直接复制走。
+     *
+     * @param owner     主窗口，可为 {@code null}
+     * @param rowNumber 行号（第一列那个数字）
+     * @param source    数据来源路径（如 {@code data.list}），没有时传 {@code null}
+     * @param json      整行的 JSON 文本，调用方已格式化好
+     */
+    public static void showRow(Window owner, String rowNumber, String source, String json) {
+        CellDetailDialog dialog = dialogFor(owner);
+        dialog.fillRow(rowNumber, source, json);
+        dialog.reveal();
+    }
+
+    /** 复用已打开的那一扇（换主窗口就重开），避免连点弹出一叠窗口。 */
+    private static CellDetailDialog dialogFor(Window owner) {
         if (open != null && open.stage.getOwner() != owner) {
             // 换了主窗口：旧的那扇已经没有关系了
             open.stage.close();
@@ -163,10 +191,14 @@ public final class CellDetailDialog {
         if (open == null) {
             open = new CellDetailDialog(owner);
         }
-        open.fill(column, rowNumber, text);
-        open.stage.show();
-        open.stage.toFront();
-        open.stage.requestFocus();
+        return open;
+    }
+
+    /** 放到最前面并给焦点。 */
+    private void reveal() {
+        stage.show();
+        stage.toFront();
+        stage.requestFocus();
     }
 
     // ---------------------------------------------------------------- 内容
@@ -185,11 +217,40 @@ public final class CellDetailDialog {
             info.append(" · ").append(column);
         }
         info.append(" · ").append(raw.length()).append(" 字符");
+        appendClipNote(info);
+        setHead("单元格内容", info.toString());
+        refreshText();
+    }
+
+    /** 整行 JSON：调用方已按缩进排好，这里不再二次格式化。 */
+    private void fillRow(String rowNumber, String source, String json) {
+        raw = json == null ? "" : json;
+        prettyText = null;
+        showPretty = false;
+        prettyButton.setVisible(false);
+        prettyButton.setManaged(false);
+
+        StringBuilder info = new StringBuilder("第 ").append(rowNumber).append(" 行");
+        if (source != null && !source.isBlank()) {
+            info.append(" · ").append(source);
+        }
+        info.append(" · ").append(raw.length()).append(" 字符");
+        appendClipNote(info);
+        setHead("整行 JSON", info.toString());
+        refreshText();
+    }
+
+    private void appendClipNote(StringBuilder info) {
         if (raw.length() > MAX_CHARS) {
             info.append("（只显示前 ").append(MAX_CHARS).append(" 字符）");
         }
-        meta.setText(info.toString());
-        refreshText();
+    }
+
+    /** 窗口标题与卡片标题一起换：连点不同内容时标题要跟着变。 */
+    private void setHead(String titleText, String metaText) {
+        title.setText(titleText);
+        stage.setTitle(titleText);
+        meta.setText(metaText);
     }
 
     /** 按当前形态重新铺文本。 */

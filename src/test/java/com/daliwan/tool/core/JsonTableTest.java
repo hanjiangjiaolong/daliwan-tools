@@ -7,6 +7,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -144,5 +145,51 @@ class JsonTableTest {
         JsonTable.Table table = JsonTable.build("[{\"id\":1,\"name\":\"a\"}]");
 
         assertEquals("id,name\r\n1,a\r\n", JsonTable.toCsv(table));
+    }
+
+    // ------------------------------------------------------------ 整行 JSON
+
+    @Test
+    @DisplayName("按行号取回原始节点，类型与原文都保住")
+    void rowNodeKeepsOriginalTypes() throws Exception {
+        JsonDocument document = JsonDocument.parse(
+                "[{\"id\":1,\"name\":\"张三\"},{\"id\":2,\"name\":\"李四\"}]");
+        JsonTable.Candidate list = new JsonTable.Candidate("", List.of(), 2, 2, true);
+
+        JsonDocument.Node first = JsonTable.rowNode(document, list, 0);
+        assertEquals(JsonDocument.Type.OBJECT, first.type());
+        assertEquals("{\"id\":1,\"name\":\"张三\"}", JsonDocument.compact(first));
+
+        JsonDocument.Node second = JsonTable.rowNode(document, list, 1);
+        assertEquals("李四", second.childAt(1).literal(), "字符串取的是解码后的内容");
+        assertEquals(JsonDocument.Type.NUMBER, second.childAt(0).type(),
+                "数字仍是数字，不会退化成单元格里那种分不清类型的文本");
+    }
+
+    @Test
+    @DisplayName("表格包在里层时，行号对应的是那个数组的元素")
+    void rowNodeFollowsCandidatePath() throws Exception {
+        JsonDocument document = JsonDocument.parse(
+                "{\"code\":0,\"data\":{\"list\":[{\"id\":1},{\"id\":2},{\"id\":3}]}}");
+        JsonTable.Candidate list = new JsonTable.Candidate("data.list", List.of(1, 0), 3, 1, true);
+
+        assertEquals("{\"id\":3}", JsonDocument.compact(JsonTable.rowNode(document, list, 2)));
+        assertEquals("{\"code\":0,\"data\":{\"list\":[{\"id\":1},{\"id\":2},{\"id\":3}]}}",
+                JsonDocument.compact(JsonTable.rowNode(document, null, 0)),
+                "没有候选时整张表就是顶层那一个对象");
+    }
+
+    @Test
+    @DisplayName("下标越界或数据源失效时返回 null，由界面给出提示")
+    void rowNodeReturnsNullWhenMissing() throws Exception {
+        JsonDocument document = JsonDocument.parse("[{\"id\":1}]");
+        JsonTable.Candidate list = new JsonTable.Candidate("", List.of(), 1, 1, true);
+
+        assertNull(JsonTable.rowNode(document, list, 1), "只有一行，第二行没有对应物");
+        assertNull(JsonTable.rowNode(document, list, -1));
+        assertNull(JsonTable.rowNode(null, list, 0));
+        assertNull(JsonTable.rowNode(document, new JsonTable.Candidate("x", List.of(9), 1, 1, true), 0),
+                "路径已经不在文档里");
+        assertNull(JsonTable.rowNode(document, null, 3), "顶层对象只有一行");
     }
 }

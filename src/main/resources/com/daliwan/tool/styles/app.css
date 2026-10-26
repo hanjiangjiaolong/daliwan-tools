@@ -958,6 +958,23 @@
     -fx-text-fill: -c-text;
 }
 
+/* 行号列：点一下看整行 JSON，用颜色和下划线把它和可编辑的单元格区分开 */
+.json-table .row-number-cell {
+    -fx-text-fill: -c-text-3;
+    -fx-alignment: center-right;
+    -fx-padding: 0 8 0 4;
+    -fx-underline: false;
+}
+
+.json-table .table-row-cell:filled:hover .row-number-cell {
+    -fx-text-fill: -c-accent;
+    -fx-underline: true;
+}
+
+.json-table .table-row-cell:filled:selected .row-number-cell {
+    -fx-text-fill: -c-accent;
+}
+
 /* 行号列弱化一点，别和内容抢注意力 */
 .json-table .table-row-cell .table-cell:first-child {
     -fx-text-fill: -c-text-3;
