@@ -7,6 +7,7 @@ import com.daliwan.tool.core.JsonFormatter;
 import com.daliwan.tool.core.JsonTable;
 import com.daliwan.tool.core.JsonTreeBuilder;
 import com.daliwan.tool.core.JsonTreeNode;
+import com.daliwan.tool.core.JsonUnescape;
 import com.daliwan.tool.core.UnicodeEscape;
 import com.daliwan.tool.core.XlsxExporter;
 import com.daliwan.tool.util.ClipboardUtil;
@@ -114,6 +115,7 @@ public class JsonPane extends VBox {
     private final ComboBox<IndentStyle> indentBox = new ComboBox<>();
     private final Button formatButton = new Button("格式化");
     private final Button minifyButton = new Button("压缩");
+    private final Button unescapeButton = new Button("去转义");
 
     /**
      * 是否把文本里残留的 {@code \\u4f70} 还原成中文。
@@ -212,6 +214,11 @@ public class JsonPane extends VBox {
         minifyButton.getStyleClass().add("ghost-button");
         minifyButton.setOnAction(e -> doMinify());
 
+        unescapeButton.getStyleClass().add("ghost-button");
+        unescapeButton.setTooltip(new Tooltip(
+                "去掉多出来的一层转义：[{\"id\":1}] 这类日志 / 字符串字段还原成真 JSON"));
+        unescapeButton.setOnAction(e -> doUnescape());
+
         unicodeToggle.setSelected(true);
         unicodeToggle.getStyleClass().add("json-unicode-toggle");
         unicodeToggle.setTooltip(new Tooltip(
@@ -244,7 +251,7 @@ public class JsonPane extends VBox {
         clearButton.setOnAction(e -> clearAll());
 
         HBox bar = new HBox(8, toolbarHint, spacer, textToggle, treeToggle, tableToggle,
-                indentLabel, indentBox, formatButton, minifyButton, unicodeToggle,
+                indentLabel, indentBox, formatButton, minifyButton, unescapeButton, unicodeToggle,
                 expandButton, collapseButton, sampleButton, clearButton);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
@@ -533,6 +540,11 @@ public class JsonPane extends VBox {
         doFormat();
     }
 
+    /** 立即执行去转义，效果等同于点击「去转义」按钮。 */
+    public void unescapeNow() {
+        doUnescape();
+    }
+
     /** 立即切到树视图并重建，效果等同于点击「树视图」。 */
     public void buildNow() {
         showTree();
@@ -647,6 +659,45 @@ public class JsonPane extends VBox {
             refreshActiveView();
         } catch (JsonFormatException e) {
             setStatus("✗ " + e.getFriendlyMessage(), true);
+        }
+    }
+
+    /**
+     * 去掉多出来的一层转义。
+     *
+     * <p>日志和字符串字段里的 JSON 常被再转义一次（引号写成反斜杠引号，外面还可能
+     * 裹一层引号），直接格式化只会报语法错误。这里原地改写编辑框内容——可以用
+     * Ctrl+Z 撤回来，也便于接着按「格式化」看结果。
+     */
+    private void doUnescape() {
+        debounce.stop();
+        String source = editor.getText();
+        if (source.isBlank()) {
+            setStatus("请先输入 JSON 内容", true);
+            return;
+        }
+        JsonUnescape.Result result = JsonUnescape.unescape(source);
+        if (!result.changed()) {
+            setStatus("内容里没有需要去除的转义", false);
+            return;
+        }
+        replaceContent(result.text());
+        StringBuilder message = new StringBuilder("✓ 已去除转义");
+        if (result.levels() > 1) {
+            message.append("（剥了 ").append(result.levels()).append(" 层）");
+        }
+        message.append(validNow(result.text()) ? "，可以格式化了" : "，还不太对，可再点一次");
+        setStatus(message.toString(), false);
+        refreshActiveView();
+    }
+
+    /** 当前文本是不是合法 JSON，只用于给提示收尾。 */
+    private static boolean validNow(String text) {
+        try {
+            JsonFormatter.validate(text);
+            return true;
+        } catch (JsonFormatException | RuntimeException notJson) {
+            return false;
         }
     }
 
